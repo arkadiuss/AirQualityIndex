@@ -6,6 +6,8 @@ import java.io.BufferedReader
 import java.io.InputStreamReader
 import java.net.HttpURLConnection
 import java.net.URL
+import java.util.concurrent.ExecutorService
+import java.util.concurrent.Future
 
 private fun getConnection(url: String): HttpURLConnection{
     val url: URL = URL(url)
@@ -27,4 +29,8 @@ fun <T> httpGet(url: String, responseClass: Class<T>): T? {
         return objectMapper.readValue(stringBuffer.toString(), responseClass)
     }
     return null
+}
+
+fun <T> httpGetAsync(executorService: ExecutorService, url: String, responseClass: Class<T>): Future<T?> {
+    return executorService.submit{ httpGet(url, responseClass) } as Future<T?>
 }
