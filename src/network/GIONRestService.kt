@@ -1,31 +1,34 @@
 package network
 
-import model.mapper.Mapper
+import kotlinx.coroutines.runBlocking
+import model.Sensor
+import model.SensorData
+import model.Station
 import network.model.SensorDataGIONResponse
 import network.model.SensorGIONResponse
 import network.model.StationGIONResponse
-import java.util.concurrent.Executors
-import java.util.concurrent.Future
 
-class GIONRestService {
+class GIONRestService: RestService {
 
     val url = "http://api.gios.gov.pl/pjp-api/rest/"
-    val executor = Executors.newSingleThreadExecutor()
 
-    fun getStations(): Future<Array<StationGIONResponse>?> {
-        return httpGetAsync(executor, "$url/station/findAll", Array<StationGIONResponse>::class.java)
+    override fun getStations(callback: Callback<List<Station>?>) {
+        runBlocking {
+            val res = httpGetAsync( "$url/station/findAll", Array<StationGIONResponse>::class.java)
+                .map { sts -> sts?.map { it.map() } }?.toList()
+            callback.onReceive(res)
+        }
     }
 
-    fun getSensors(stationID: Long): Future<Array<SensorGIONResponse>?> {
-        return httpGetAsync(executor,"$url/station/sensors/$stationID", Array<SensorGIONResponse>::class.java)
+    fun getSensors(stationID: Long) {
+        return httpGetAsync("$url/station/sensors/$stationID", Array<SensorGIONResponse>::class.java)
+            .map { sts -> sts?.map { it.map() } }
     }
 
-    fun getSensorData(sensorID: Long): Future<Array<SensorDataGIONResponse>?> {
-        return httpGetAsync(executor, "$url/station/sensors/$sensorID", Array<SensorDataGIONResponse>::class.java)
+    fun getSensorData(sensorID: Long) {
+        return httpGetAsync( "$url/station/sensors/$sensorID", Array<SensorDataGIONResponse>::class.java)
+            .map { sts -> sts?.map { it.map() } }
     }
 
 }
 
-fun <T, V> Future<T>.map(mapper: Mapper<T, V>): V{
-    return mapper.map(get())
-}
