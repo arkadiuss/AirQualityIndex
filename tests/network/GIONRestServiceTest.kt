@@ -1,9 +1,7 @@
 package network
 
-import network.model.StationGIONResponse
-import org.junit.Assert.assertTrue
+import org.junit.Assert
 import org.junit.Test
-import org.mockito.Mockito
 
 internal class GIONRestServiceTest {
 
@@ -11,7 +9,8 @@ internal class GIONRestServiceTest {
 
     @Test
     fun getStations() {
-        val stations = gionRestService.getStations()
-        assertTrue(2 < stations?.size?:-1)
+        val stations = gionRestService.getStations{
+            Assert.assertTrue(2 < it?.size ?: -1)
+        }
     }
 }

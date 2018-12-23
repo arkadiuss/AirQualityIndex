@@ -12,22 +12,30 @@ class GIONRestService: RestService {
 
     val url = "http://api.gios.gov.pl/pjp-api/rest/"
 
-    override fun getStations(callback: Callback<List<Station>?>) {
+    override fun getStations(callback: (List<Station>?) -> Unit) {
         runBlocking {
+            println("start")
             val res = httpGetAsync( "$url/station/findAll", Array<StationGIONResponse>::class.java)
                 .map { sts -> sts?.map { it.map() } }?.toList()
-            callback.onReceive(res)
+            println("end")
+            callback(res)
         }
     }
 
-    fun getSensors(stationID: Long) {
-        return httpGetAsync("$url/station/sensors/$stationID", Array<SensorGIONResponse>::class.java)
-            .map { sts -> sts?.map { it.map() } }
+    override fun getSensors(stationID: Long, callback: (List<Sensor>?) -> Unit) {
+        runBlocking {
+            val res = httpGetAsync("$url/station/sensors/$stationID", Array<SensorGIONResponse>::class.java)
+                .map { sts -> sts?.map { it.map() } }
+            callback(res)
+        }
     }
 
-    fun getSensorData(sensorID: Long) {
-        return httpGetAsync( "$url/station/sensors/$sensorID", Array<SensorDataGIONResponse>::class.java)
-            .map { sts -> sts?.map { it.map() } }
+    override fun getSensorData(sensorID: Long, callback: (List<SensorData>?) -> Unit) {
+        runBlocking {
+            val res = httpGetAsync( "$url/station/sensors/$sensorID", Array<SensorDataGIONResponse>::class.java)
+                .map { sts -> sts?.map { it.map() } }
+            callback(res)
+        }
     }
 
 }

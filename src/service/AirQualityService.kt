@@ -1,7 +1,15 @@
 package service
 
+import cache.CacheService
 import model.Station
+import network.RestService
 
-interface AirQualityService {
-    fun getStations(): List<Station>
+abstract class AirQualityService {
+
+    abstract val restService: RestService
+    abstract val cacheService: CacheService
+
+    fun getStations(): List<Station>{
+
+    }
 }
