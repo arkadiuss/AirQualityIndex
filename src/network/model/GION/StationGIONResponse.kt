@@ -1,4 +1,4 @@
-package network.model
+package network.model.GION
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import model.IMappable

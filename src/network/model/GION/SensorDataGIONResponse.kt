@@ -1,4 +1,4 @@
-package network.model
+package network.model.GION
 
 import model.IMappable
 import model.SensorData

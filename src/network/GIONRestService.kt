@@ -4,9 +4,9 @@ import kotlinx.coroutines.runBlocking
 import model.Sensor
 import model.SensorData
 import model.Station
-import network.model.SensorDataGIONResponse
-import network.model.SensorGIONResponse
-import network.model.StationGIONResponse
+import network.model.GION.SensorDataGIONResponse
+import network.model.GION.SensorGIONResponse
+import network.model.GION.StationGIONResponse
 
 class GIONRestService: IRestService {
 
