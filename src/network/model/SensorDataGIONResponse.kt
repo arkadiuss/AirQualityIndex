@@ -1,13 +1,13 @@
 package network.model
 
-import model.Mappable
+import model.IMappable
 import model.SensorData
 import java.time.LocalDate
 
 class SensorDataGIONResponse(
     val key: String,
     val values: Array<Entry>
-) : Mappable<SensorData> {
+) : IMappable<SensorData> {
     class Entry(
         val date: LocalDate,
         val value: Double

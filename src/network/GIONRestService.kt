@@ -8,7 +8,7 @@ import network.model.SensorDataGIONResponse
 import network.model.SensorGIONResponse
 import network.model.StationGIONResponse
 
-class GIONRestService: RestService {
+class GIONRestService: IRestService {
 
     val url = "http://api.gios.gov.pl/pjp-api/rest/"
 

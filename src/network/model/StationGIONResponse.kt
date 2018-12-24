@@ -1,12 +1,12 @@
 package network.model
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
-import model.Mappable
+import model.IMappable
 import model.Station
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 class StationGIONResponse(val id: Long = 0,
-                          val stationName: String = "") : Mappable<Station> {
+                          val stationName: String = "") : IMappable<Station> {
 
     override fun map(): Station {
         return Station(
