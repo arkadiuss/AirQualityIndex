@@ -2,4 +2,6 @@ package model
 
 import java.util.*
 
-class QualityIndex(val date: Date, val level: String)
+class QualityIndex(val name: String,
+                   val date: Date,
+                   val level: String)
