@@ -2,18 +2,18 @@ package network.model.GION
 
 import model.IMappable
 import model.SensorData
-import java.time.LocalDate
+import java.util.*
 
 class SensorDataGIONResponse(
     val key: String,
     val values: Array<Entry>
 ) : IMappable<SensorData> {
     class Entry(
-        val date: LocalDate,
+        val date: Date,
         val value: Double
     )
 
     override fun map(): SensorData {
-        return SensorData()
+        return SensorData(date = values[0].date, value = values[1].value)
     }
 }

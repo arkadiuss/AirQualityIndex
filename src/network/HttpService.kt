@@ -16,9 +16,14 @@ private fun getConnection(url: String): HttpURLConnection{
 
 
 //TODO: Error handling
-fun <T> httpGet(url: String, responseClass: Class<T>): T? {
+fun <T> httpGet(url: String, responseClass: Class<T>, headers: Map<String,String>? = null): T? {
     val con: HttpURLConnection = getConnection(url)
     con.requestMethod = "GET"
+    headers?.let {
+        headers.forEach { key, value ->
+            con.setRequestProperty(key,value)
+        }
+    }
     if(con.responseCode == HttpURLConnection.HTTP_OK){
         val reader = BufferedReader(InputStreamReader(con.inputStream))
         val stringBuffer = StringBuffer()
@@ -26,14 +31,17 @@ fun <T> httpGet(url: String, responseClass: Class<T>): T? {
             stringBuffer.append(line)
         }
         val objectMapper = ObjectMapper()
+        println(stringBuffer.toString())
         return objectMapper.readValue(stringBuffer.toString(), responseClass)
+    }else{
+        println(con.responseCode)
     }
     return null
 }
 
-fun <T> httpGetAsync(url: String, responseClass: Class<T>): Deferred<T?> {
+fun <T> httpGetAsync(url: String, responseClass: Class<T>, headers: Map<String,String>? = null): Deferred<T?> {
     return GlobalScope.async {
-        httpGet(url, responseClass)
+        httpGet(url, responseClass, headers)
     }
 }
 

@@ -1,5 +1,7 @@
 package network
 
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import model.Sensor
 import model.SensorData
@@ -13,7 +15,7 @@ class GIONRestService: IRestService {
     val url = "http://api.gios.gov.pl/pjp-api/rest/"
 
     override fun getStations(callback: (List<Station>?) -> Unit) {
-        runBlocking {
+        GlobalScope.launch {
             println("start")
             val res = httpGetAsync( "$url/station/findAll", Array<StationGIONResponse>::class.java)
                 .map { sts -> sts?.map { it.map() } }?.toList()
