@@ -33,7 +33,7 @@ class GIONRestService: IRestService {
 
     override fun getSensorData(sensor: Sensor, callback: (List<SensorData>?) -> Unit) {
         GlobalScope.launch {
-            val res = httpGetAsync( "$url/station/sensors/${sensor.id}", SensorDataGIONResponse::class.java)
+            val res = httpGetAsync( "$url/data/getData/${sensor.id}", SensorDataGIONResponse::class.java)
                 .map { it?.map() }
             callback(res)
         }

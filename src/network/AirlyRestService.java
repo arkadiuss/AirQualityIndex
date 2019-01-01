@@ -67,6 +67,7 @@ public class AirlyRestService implements IRestService {
                             MeasurementsAirlyResponse.class, headers);
             SensorDataAirly[] values = response.getCurrent().getValues();
             List<SensorData> sensorsData = Arrays.stream(values)
+                    .filter(sensorDataAirly -> sensorDataAirly.getName().equals(sensor.getName()))
                     .map(sensorDataAirly -> new SensorData(sensorDataAirly.getName(),
                             response.getCurrent().getTillDateTime(),
                             sensorDataAirly.getValue()))
@@ -83,9 +84,13 @@ public class AirlyRestService implements IRestService {
                             MeasurementsAirlyResponse.class, headers);
             IndexAirly[] indexes = response.getCurrent().getIndexes();
             List<QualityIndex> indexesList = Arrays.stream(indexes)
-                    .map(IndexAirly::map)
-                    .peek(qualityIndex ->
-                            qualityIndex.setDate(response.getCurrent().getTillDateTime()))
+                    .map(indexAirly -> {
+                        QualityIndex.Builder builder = new QualityIndex.Builder();
+                        builder.setDate(response.getCurrent().getTillDateTime());
+                        builder.setLevel(indexAirly.getLevel());
+                        builder.setName(indexAirly.getName());
+                        return builder.build();
+                    })
                     .collect(Collectors.toList());
             callback.invoke(indexesList);
         });

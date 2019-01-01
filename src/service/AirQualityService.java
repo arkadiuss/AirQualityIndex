@@ -2,7 +2,9 @@ package service;
 
 import cache.ICacheService;
 import kotlin.Unit;
+import model.QualityIndex;
 import model.Sensor;
+import model.SensorData;
 import model.Station;
 import network.IRestService;
 
@@ -30,9 +32,24 @@ public class AirQualityService {
 
     public void getSensors(Long stationId, Consumer<List<Sensor>> callback){
         restService.getSensors(stationId, sensors -> {
-            System.out.println("sensosts received");
             cacheService.save("sensors", sensors);
             callback.accept(sensors);
+            return Unit.INSTANCE;
+        });
+    }
+
+    public void getSensorData(Sensor sensor, Consumer<List<SensorData>> callback){
+        restService.getSensorData(sensor, sensorData -> {
+            cacheService.save("sensorData", sensorData);
+            callback.accept(sensorData);
+            return Unit.INSTANCE;
+        });
+    }
+
+    public void getIndexes(Long stationId, Consumer<List<QualityIndex>> callback){
+        restService.getIndexes(stationId, indexes -> {
+            cacheService.save("indexes", indexes);
+            callback.accept(indexes);
             return Unit.INSTANCE;
         });
     }
