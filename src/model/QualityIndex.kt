@@ -1,7 +1,8 @@
 package model
 
+import java.io.Serializable
 import java.util.*
 
 class QualityIndex(val name: String,
-                   val date: Date,
-                   val level: String)
+                   var date: Date,
+                   val level: String): Serializable

@@ -1,6 +1,13 @@
 package network.model.Airly;
 
-public class IndexAirly {
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import model.IMappable;
+import model.QualityIndex;
+
+import java.util.Date;
+
+@JsonIgnoreProperties(ignoreUnknown = true)
+public class IndexAirly implements IMappable<QualityIndex> {
     private String name;
     private Double value;
     private String level;
@@ -30,4 +37,8 @@ public class IndexAirly {
     }
 
 
+    @Override
+    public QualityIndex map() {
+        return new QualityIndex(name, new Date(), level);
+    }
 }

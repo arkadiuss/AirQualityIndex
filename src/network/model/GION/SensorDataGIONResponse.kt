@@ -7,13 +7,13 @@ import java.util.*
 class SensorDataGIONResponse(
     val key: String,
     val values: Array<Entry>
-) : IMappable<SensorData> {
+) : IMappable<List<SensorData>> {
     class Entry(
         val date: Date,
         val value: Double
     )
 
-    override fun map(): SensorData {
-        return SensorData(date = values[0].date, value = values[1].value)
+    override fun map(): List<SensorData> {
+        return listOf(SensorData(date = values[0].date, value = values[0].value, name = key))
     }
 }
