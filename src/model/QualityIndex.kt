@@ -1,15 +1,15 @@
 package model
 
 import java.io.Serializable
-import java.util.*
+import java.time.LocalDateTime
 
 class QualityIndex(val name: String,
-                   val date: Date,
+                   val date: LocalDateTime,
                    val level: String): Serializable{
 
     class Builder{
         lateinit var name: String
-        lateinit var date: Date
+        lateinit var date: LocalDateTime
         lateinit var level: String
 
         fun build(): QualityIndex{

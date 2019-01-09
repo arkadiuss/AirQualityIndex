@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import model.IMappable;
 import model.QualityIndex;
 
-import java.util.Date;
+import java.time.LocalDateTime;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class IndexAirly implements IMappable<QualityIndex> {
@@ -39,6 +39,6 @@ public class IndexAirly implements IMappable<QualityIndex> {
 
     @Override
     public QualityIndex map() {
-        return new QualityIndex(name, new Date(), level);
+        return new QualityIndex(name, LocalDateTime.now(), level);
     }
 }

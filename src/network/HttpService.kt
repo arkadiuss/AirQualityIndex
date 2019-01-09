@@ -31,7 +31,6 @@ fun <T> httpGet(url: String, responseClass: Class<T>, headers: Map<String,String
             stringBuffer.append(line)
         }
         val objectMapper = ObjectMapper()
-        println(stringBuffer.toString())
         return objectMapper.readValue(stringBuffer.toString(), responseClass)
     }else{
         println(con.responseCode)

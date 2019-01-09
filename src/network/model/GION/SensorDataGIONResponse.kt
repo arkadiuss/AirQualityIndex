@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonProperty
 import model.IMappable
 import model.SensorData
-import java.util.*
+import java.time.LocalDateTime
 
 class SensorDataGIONResponse(
     val key: String = "",
@@ -12,12 +12,12 @@ class SensorDataGIONResponse(
 ) : IMappable<List<SensorData>> {
     class Entry(
         @JsonIgnore
-        var date: Date = Date(),
+        var date: LocalDateTime = LocalDateTime.MIN,
         val value: Double = 0.0
     ){
         @JsonProperty("date")
         fun unpackDate(date: String){
-            this.date = Date()
+            this.date = LocalDateTime.parse(date)
         }
     }
 

@@ -1,8 +1,8 @@
 package model
 
 import java.io.Serializable
-import java.util.*
+import java.time.LocalDateTime
 
 class SensorData(val name: String,
-                 val date: Date,
+                 val date: LocalDateTime,
                  val value: Double): Serializable

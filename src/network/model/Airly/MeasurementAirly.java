@@ -2,27 +2,27 @@ package network.model.Airly;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
-import java.util.Date;
+import java.time.LocalDateTime;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class MeasurementAirly {
-    private Date tillDateTime, fromDateTime;
+    private LocalDateTime tillDateTime, fromDateTime;
     private IndexAirly[] indexes;
     private SensorDataAirly[] values;
 
-    public Date getTillDateTime() {
+    public LocalDateTime getTillDateTime() {
         return tillDateTime;
     }
 
-    public void setTillDateTime(Date tillDateTime) {
+    public void setTillDateTime(LocalDateTime tillDateTime) {
         this.tillDateTime = tillDateTime;
     }
 
-    public Date getFromDateTime() {
+    public LocalDateTime getFromDateTime() {
         return fromDateTime;
     }
 
-    public void setFromDateTime(Date fromDateTime) {
+    public void setFromDateTime(LocalDateTime fromDateTime) {
         this.fromDateTime = fromDateTime;
     }
 

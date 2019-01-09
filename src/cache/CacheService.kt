@@ -15,7 +15,6 @@ class CacheService(storageName: String) : ICacheService{
     override fun save(key: String, data: Any) {
         val file = getFile(key)
         val fw = ObjectOutputStream(FileOutputStream(file.absoluteFile))
-        println(file.absoluteFile)
         fw.writeObject(data)
         fw.close()
     }
