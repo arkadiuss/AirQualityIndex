@@ -25,7 +25,8 @@ class StationAirlyResponse(val id: Long = 0,
     override fun map(): Station {
         return Station(
             id = this.id,
-            name = "${this.city} (${this.street} ${this.number})"
+            name = "${this.city} ${this.street} ${this.number}",
+            address = "${this.city} (ul. ${this.street} ${this.number})"
         )
     }
 }

@@ -9,6 +9,7 @@ import model.Station;
 import network.IRestService;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Consumer;
 
 public class AirQualityService {
@@ -51,6 +52,13 @@ public class AirQualityService {
             cacheService.save("indexes", indexes);
             callback.accept(indexes);
             return Unit.INSTANCE;
+        });
+    }
+
+    public void getCurrentIndexForStation(String station, Consumer<List<QualityIndex>> callback){
+        getStations(stations -> {
+            Optional<Station> cs = stations.stream().filter(s -> s.getName().contains(station)).findFirst();
+            cs.ifPresent(st -> getIndexes(st.getId(), callback));
         });
     }
 }

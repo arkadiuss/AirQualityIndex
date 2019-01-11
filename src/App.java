@@ -28,18 +28,13 @@ class App{
             airQualityService = new GIONAirQualityService();
         }
         if(app.cmd.hasOption("current-index")){
-            app.showCurrentIndex(airQualityService);
+            if(!app.cmd.hasOption("station")){
+                app.showHelp();
+                System.exit(1);
+            }
+            String station = app.cmd.getOptionValue("station");
+            app.showCurrentIndex(airQualityService, station);
         }
-//        airQualityService.getStations(stations -> {
-//            stations.forEach(st -> System.out.println(st.getId()+" "+st.getName()));
-//        });
-//        airQualityService.getSensors(401L, sensors -> {
-//            System.out.println("received");
-//            sensors.forEach(st -> System.out.println(st.getId()+" "+st.getName()+" "+st.getStationId()));
-//        });
-//        airQualityService.getSensorData(new Sensor(2770, 401, "PM10"), sensorData -> {
-//            sensorData.forEach(st -> System.out.println(st.getDate()+" "+st.getName()+" "+st.getValue() ));
-//        });
         try {
             Thread.sleep(30000);
         } catch (InterruptedException e) {
@@ -63,20 +58,20 @@ class App{
                 .longOpt("current-index")
                 .desc("Show current index for a station")
                 .build();
+        Option station = Option.builder("s")
+                .longOpt("station")
+                .desc("Show current index for a station")
+                .required(false)
+                .build();
         options.addOption(api);
         options.addOption(currentIndex);
+        options.addOption(station);
         return options;
     }
 
-    private void showCurrentIndex(AirQualityService airQualityService){
-        airQualityService.getStations(stations -> {
-            stations.forEach(st -> System.out.println(st.getId()+" "+st.getName()));
-            System.out.println("For which station? [id]");
-            Long id = scanner.nextLong();
-            airQualityService.getIndexes(id, indexes -> {
-                indexes.forEach(st -> System.out.println(st.getDate() +" "+st.getName()+" "+st.getLevel()));
-            });
-        });
+    private void showCurrentIndex(AirQualityService airQualityService, String station){
+        airQualityService.getCurrentIndexForStation(station, qualityIndices ->
+                qualityIndices.forEach(i -> System.out.println(i.getDate() +" "+i.getName()+" "+i.getLevel())));
     }
 
 }

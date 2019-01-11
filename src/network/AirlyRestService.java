@@ -20,7 +20,7 @@ import java.util.stream.IntStream;
 public class AirlyRestService implements IRestService {
 
     private String url = "https://airapi.airly.eu/v2/";
-    private String apiKey = "--";
+    private String apiKey = "tX152DHenh3FKr2aLFbuYuJgsxNDa9wc";
     private Map<String, String> headers = new HashMap<>();
     private ExecutorService executor = Executors.newFixedThreadPool(4);
     public AirlyRestService(){
@@ -31,7 +31,7 @@ public class AirlyRestService implements IRestService {
     public void getStations(Function1<List<Station>, Unit> callback) {
         executor.execute(() -> {
             StationAirlyResponse[] stations = HttpServiceKt
-                    .httpGet(url + "installations/nearest?lat=51.0647&lng=19.9450&&maxDistanceKM=500&maxResults=100",
+                    .httpGet(url + "installations/nearest?lat=50.0647&lng=19.9450&&maxDistanceKM=20&maxResults=100",
                             StationAirlyResponse[].class, headers);
             if(stations == null)
                 callback.invoke(new ArrayList<>());
@@ -86,7 +86,7 @@ public class AirlyRestService implements IRestService {
             List<QualityIndex> indexesList = Arrays.stream(indexes)
                     .map(indexAirly -> {
                         QualityIndex.Builder builder = new QualityIndex.Builder();
-                        builder.setDate(response.getCurrent().getTillDateTime());
+                        builder.setDate(response.getCurrent().getFromDateTime());
                         builder.setLevel(indexAirly.getLevel());
                         builder.setName(indexAirly.getName());
                         return builder.build();
