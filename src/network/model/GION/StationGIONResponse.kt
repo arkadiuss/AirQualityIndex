@@ -13,9 +13,9 @@ class StationGIONResponse(val id: Long = 0,
                           @JsonIgnore()
                           var city: String? = "") : IMappable<Station> {
 
-    @JsonProperty("city")
-    private fun unpackCityName(city: Map<String, Any>){
-        this.city = city["name"] as String
+    @JsonProperty("city", required = false)
+    private fun unpackCityName(city: Map<String, Any>?){
+        this.city =  (city?.get("name")?:"") as String
     }
 
     override fun map(): Station {

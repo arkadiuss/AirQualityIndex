@@ -1,8 +1,10 @@
 package cache;
 
-import java.io.Serializable;
+import java.time.LocalDateTime;
+import java.util.Optional;
 
 public interface ICacheService {
     void save(String key, Object data);
-    Object read(String key);
+    Optional<Object> read(String key);
+    LocalDateTime getLasyModificationOfFile(String key);
 }

@@ -61,6 +61,7 @@ class App{
         Option station = Option.builder("s")
                 .longOpt("station")
                 .desc("Show current index for a station")
+                .numberOfArgs(1)
                 .required(false)
                 .build();
         options.addOption(api);
