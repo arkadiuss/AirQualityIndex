@@ -25,7 +25,7 @@ class App{
             app.cmd.getOptionValue("api").equals("airly")){
             airQualityService = new AirlyAirQualityService();
         } else{
-            airQualityService = new GIONAirQualityService();
+            airQualityService = new GIONAirQualityService(true);
         }
         if(app.cmd.hasOption("current-index")){
             if(!app.cmd.hasOption("station")){
@@ -42,11 +42,6 @@ class App{
             String station = app.cmd.getOptionValue("station");
             String sensor = app.cmd.getOptionValue("sensor");
             app.showSensorDataForStationAndParam(airQualityService, station, sensor);
-        }
-        try {
-            Thread.sleep(30000);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
         }
     }
 
