@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import model.IMappable
 import model.SensorData
 import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 
 class SensorDataGIONResponse(
     val key: String = "",
@@ -17,7 +18,8 @@ class SensorDataGIONResponse(
     ){
         @JsonProperty("date")
         fun unpackDate(date: String){
-            this.date = LocalDateTime.parse(date)
+            val formatter: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
+            this.date = LocalDateTime.parse(date, formatter)
         }
     }
 

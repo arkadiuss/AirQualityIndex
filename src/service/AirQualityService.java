@@ -28,7 +28,7 @@ public class AirQualityService {
 
     public void getStations(Consumer<List<Station>> callback){
         final String key = "stations";
-        if(!forceNetwork && isExpired(key)){
+        if(!forceNetwork && !isExpired(key)){
             getFromCache(key, callback);
         }else{
             restService.getStations(stations -> {
@@ -39,7 +39,7 @@ public class AirQualityService {
 
     public void getSensors(Long stationId, Consumer<List<Sensor>> callback){
         final String key = "sensors";
-        if(!forceNetwork && isExpired(key)){
+        if(!forceNetwork && !isExpired(key)){
             getFromCache(key, callback);
         }else{
             restService.getSensors(stationId, sensors -> {
@@ -51,7 +51,7 @@ public class AirQualityService {
 
     public void getSensorData(Sensor sensor, Consumer<List<SensorData>> callback){
         final String key = "sensorData";
-        if(!forceNetwork && isExpired(key)){
+        if(!forceNetwork && !isExpired(key)){
             getFromCache(key, callback);
         }else{
             restService.getSensorData(sensor, sensorData -> {
@@ -63,7 +63,7 @@ public class AirQualityService {
 
     public void getIndexes(Long stationId, Consumer<List<QualityIndex>> callback){
         final String key = "indices";
-        if(!forceNetwork && isExpired(key)){
+        if(!forceNetwork && !isExpired(key)){
             getFromCache(key, callback);
         }else{
             restService.getIndexes(stationId, qualityIndices -> {
@@ -79,6 +79,25 @@ public class AirQualityService {
                     .filter(s -> s.getName().contains(station))
                     .findFirst();
             cs.ifPresent(st -> getIndexes(st.getId(), callback));
+        });
+    }
+
+    public void getSensorDataForStationAndDate(String stationName, String sensorName,
+                                               ServiceResponse<Station, List<SensorData>> callback){
+        getStations(stations -> {
+            stations.stream()
+                    .filter(s -> s.getName().contains(stationName))
+                    .findFirst()
+                    .ifPresent(st ->{
+                        getSensors(st.getId(),sensors -> {
+                            sensors.stream()
+                                    .filter(sensor -> sensor.getName().contains(sensorName))
+                                    .findFirst()
+                                    .ifPresent(sensor -> {
+                                        getSensorData(sensor, sensorData -> callback.onResponse(st, sensorData));
+                                    });
+                        });
+                    });
         });
     }
 
@@ -108,4 +127,6 @@ public class AirQualityService {
     private void showCacheInfo(String key){
         System.out.println("Data is younger than 1 hour, getting "+key+" from cache");
     }
+
+
 }

@@ -6,16 +6,14 @@ import model.QualityIndex;
 import model.Sensor;
 import model.SensorData;
 import model.Station;
-import network.model.Airly.IndexAirly;
-import network.model.Airly.MeasurementsAirlyResponse;
-import network.model.Airly.SensorDataAirly;
-import network.model.Airly.StationAirlyResponse;
+import network.model.Airly.*;
 
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 public class AirlyRestService implements IRestService {
 
@@ -65,8 +63,12 @@ public class AirlyRestService implements IRestService {
             MeasurementsAirlyResponse response = HttpServiceKt
                     .httpGet(url + "measurements/installation?installationId="+sensor.getStationId(),
                             MeasurementsAirlyResponse.class, headers);
-            SensorDataAirly[] values = response.getCurrent().getValues();
-            List<SensorData> sensorsData = Arrays.stream(values)
+            SensorDataAirly[] curValues = response.getCurrent().getValues();
+            MeasurementAirly[] histValues = response.getHistory();
+            List<SensorData> sensorsData =
+                    Stream.concat(
+                            Arrays.stream(curValues),
+                            Arrays.stream(histValues).map(MeasurementAirly::getValues).flatMap(Arrays::stream))
                     .filter(sensorDataAirly -> sensorDataAirly.getName().equals(sensor.getName()))
                     .map(sensorDataAirly -> new SensorData(sensorDataAirly.getName(),
                             response.getCurrent().getTillDateTime(),
