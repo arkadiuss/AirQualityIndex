@@ -43,8 +43,19 @@ class App{
             }
             String station = app.cmd.getOptionValue("station");
             String sensor = app.cmd.getOptionValue("sensor");
-            LocalDateTime date = app.getDate();
+            LocalDateTime date = app.getDate("date");
             app.showSensorDataForStationAndParam(airQualityService, station, sensor, date);
+        }else if(app.cmd.hasOption("sensor-average")){
+            if(!app.cmd.hasOption("station")||!app.cmd.hasOption("sensor")||
+                    !app.cmd.hasOption("start-date")||!app.cmd.hasOption("end-date")){
+                app.showHelp();
+                System.exit(1);
+            }
+            String station = app.cmd.getOptionValue("station");
+            String sensor = app.cmd.getOptionValue("sensor");
+            LocalDateTime startDate = app.getDate("start-date");
+            LocalDateTime endDate = app.getDate("end-date");
+            app.showSensorAverageForStation(airQualityService, station,sensor,startDate, endDate);
         }
     }
 
@@ -69,6 +80,10 @@ class App{
                 .longOpt("sensor-status")
                 .desc("Show current level for sensor")
                 .build();
+        Option sensorAverage = Option.builder()
+                .longOpt("sensor-average")
+                .desc("Show average for a sensor")
+                .build();
 
         Option station = Option.builder("s")
                 .longOpt("station")
@@ -89,17 +104,33 @@ class App{
                 .numberOfArgs(2)
                 .required(false)
                 .build();
+        Option startDate = Option.builder()
+                .longOpt("start-date")
+                .desc("Specify a start date and time")
+                .numberOfArgs(2)
+                .required(false)
+                .build();
+        Option endDate = Option.builder()
+                .longOpt("end-date")
+                .desc("Specify a start date and time")
+                .numberOfArgs(2)
+                .required(false)
+                .build();
+
         options.addOption(api);
         options.addOption(currentIndex);
-        options.addOption(station);
         options.addOption(sensorStatus);
+        options.addOption(sensorAverage);
+        options.addOption(station);
         options.addOption(sensor);
         options.addOption(date);
+        options.addOption(startDate);
+        options.addOption(endDate);
         return options;
     }
 
-    private LocalDateTime getDate(){
-        String[] parts = cmd.getOptionValues("date");
+    private LocalDateTime getDate(String name){
+        String[] parts = cmd.getOptionValues(name);
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
         return LocalDateTime.parse(parts[0]+" "+parts[1], formatter);
     }
@@ -115,6 +146,15 @@ class App{
             System.out.println(st.getName() + " "+ st.getAddress());
             System.out.println(sensorData.getDate() + " " +
                     sensorData.getName() + " " + sensorData.getValue());
+        });
+    }
+
+    private void showSensorAverageForStation(AirQualityService airQualityService,
+                                             String station, String sensor,
+                                             LocalDateTime start, LocalDateTime end){
+        airQualityService.getAverageForStationAndSensor(station, sensor, start, end, (st, average) -> {
+            System.out.println(st.getName() + " "+ st.getAddress());
+            System.out.println("Average is: "+average);
         });
     }
 

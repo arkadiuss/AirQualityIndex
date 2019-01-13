@@ -98,6 +98,22 @@ public class AirQualityService {
                 })));
     }
 
+    public void getAverageForStationAndSensor(String stationName, String sensorName,
+                                              LocalDateTime startDate, LocalDateTime endDate,
+                                              ServiceResponse2<Station, Double> callback){
+        getStationByName(stationName,station ->
+                getSensorByName(station.getId(),sensorName, sensor ->
+                        getSensorData(sensor, sensorData -> {
+                            Double avg = sensorData.stream()
+                                    .filter(sensorEntry ->
+                                            sensorEntry.getDate().isAfter(startDate) &&
+                                            sensorEntry.getDate().isBefore(endDate))
+                                    .mapToDouble(SensorData::getValue)
+                                    .average().orElse(0);
+                            callback.onResponse(station, avg);
+                        })));
+    }
+
     private void getStationByName(String stationName, ServiceResponse1<Station> callback){
         getStations(stations -> {
             stations.stream()
