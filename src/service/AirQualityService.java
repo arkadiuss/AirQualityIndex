@@ -7,8 +7,11 @@ import model.Sensor;
 import model.SensorData;
 import model.Station;
 import network.IRestService;
+import service.response.ServiceResponse1;
+import service.response.ServiceResponse2;
 
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
@@ -82,22 +85,34 @@ public class AirQualityService {
         });
     }
 
-    public void getSensorDataForStationAndDate(String stationName, String sensorName,
-                                               ServiceResponse<Station, List<SensorData>> callback){
+    public void getSensorDataForStationAndDate(String stationName, String sensorName, LocalDateTime date,
+                                               ServiceResponse2<Station, SensorData> callback){
+        getStationByName(stationName,station ->
+            getSensorByName(station.getId(),sensorName, sensor ->
+                getSensorData(sensor, sensorData -> {
+                    sensorData.stream()
+                            .min((o1, o2) ->
+                                    (int) (secondsDiff(o1.getDate(), date) - secondsDiff(o2.getDate(),date)))
+                            .ifPresent(sensorEntry -> callback.onResponse(station, sensorEntry));
+
+                })));
+    }
+
+    private void getStationByName(String stationName, ServiceResponse1<Station> callback){
         getStations(stations -> {
             stations.stream()
                     .filter(s -> s.getName().contains(stationName))
                     .findFirst()
-                    .ifPresent(st ->{
-                        getSensors(st.getId(),sensors -> {
-                            sensors.stream()
-                                    .filter(sensor -> sensor.getName().contains(sensorName))
-                                    .findFirst()
-                                    .ifPresent(sensor -> {
-                                        getSensorData(sensor, sensorData -> callback.onResponse(st, sensorData));
-                                    });
-                        });
-                    });
+                    .ifPresent(callback::onResponse);
+        });
+    }
+
+    private void getSensorByName(Long stationId, String sensorName, ServiceResponse1<Sensor> callback){
+        getSensors(stationId, sensors -> {
+            sensors.stream()
+                    .filter(s -> s.getName().contains(sensorName))
+                    .findFirst()
+                    .ifPresent(callback::onResponse);
         });
     }
 
@@ -128,5 +143,7 @@ public class AirQualityService {
         System.out.println("Data is younger than 1 hour, getting "+key+" from cache");
     }
 
-
+    private Long secondsDiff(LocalDateTime date1, LocalDateTime date2){
+        return Math.abs(date1.until(date2, ChronoUnit.SECONDS));
+    }
 }
