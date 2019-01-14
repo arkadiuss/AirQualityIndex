@@ -1,17 +1,15 @@
 import org.apache.commons.cli.*;
 import service.AirQualityService;
-import service.AirlyAirQualityService;
-import service.GIONAirQualityService;
+import service.data.AirlyAirQualityDataService;
+import service.data.GIONAirQualityDataService;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.Scanner;
 
 class App{
     private Options options = createOptions();
     private CommandLineParser parser = new DefaultParser();
     private CommandLine cmd;
-    private Scanner scanner = new Scanner(System.in);
 
     public static void main(String[] args){
         App app = new App();
@@ -25,9 +23,9 @@ class App{
         AirQualityService airQualityService;
         if(app.cmd.hasOption("api") &&
             app.cmd.getOptionValue("api").equals("airly")){
-            airQualityService = new AirlyAirQualityService();
+            airQualityService = new AirQualityService(new AirlyAirQualityDataService());
         } else{
-            airQualityService = new GIONAirQualityService(true);
+            airQualityService= new AirQualityService(new GIONAirQualityDataService());
         }
         if(app.cmd.hasOption("current-index")){
             if(!app.cmd.hasOption("station")){
@@ -56,6 +54,11 @@ class App{
             LocalDateTime startDate = app.getDate("start-date");
             LocalDateTime endDate = app.getDate("end-date");
             app.showSensorAverageForStation(airQualityService, station,sensor,startDate, endDate);
+        }
+        try{
+            Thread.sleep(30000);
+        }catch (InterruptedException e) {
+            e.printStackTrace();
         }
     }
 

@@ -1,7 +1,5 @@
 package network;
 
-import kotlin.Unit;
-import kotlin.jvm.functions.Function1;
 import model.QualityIndex;
 import model.Sensor;
 import model.SensorData;
@@ -9,6 +7,7 @@ import model.Station;
 import network.model.Airly.*;
 
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
@@ -26,47 +25,46 @@ public class AirlyRestService implements IRestService {
     }
 
     @Override
-    public void getStations(Function1<List<Station>, Unit> callback) {
-        executor.execute(() -> {
+    public CompletableFuture<List<Station>> getStations() {
+        return CompletableFuture.supplyAsync(() -> {
             StationAirlyResponse[] stations = HttpServiceKt
                     .httpGet(url + "installations/nearest?lat=50.0647&lng=19.9450&&maxDistanceKM=20&maxResults=100",
                             StationAirlyResponse[].class, headers);
-            if(stations == null)
-                callback.invoke(new ArrayList<>());
-            else
-                callback.invoke(
-                    Arrays.stream(stations)
-                            .map(StationAirlyResponse::map)
-                            .collect(Collectors.toList())
-            );
+            List<Station> response;
+            if(stations == null) {
+                response = Collections.emptyList();
+            }else {
+                response =  Arrays.stream(stations)
+                        .map(StationAirlyResponse::map)
+                        .collect(Collectors.toList());
+            }
+            return response;
         });
     }
 
     @Override
-    public void getSensors(Long stationID, Function1<List<Sensor>, Unit> callback) {
-        executor.execute(() -> {
+    public CompletableFuture<List<Sensor>> getSensors(Long stationID) {
+        return CompletableFuture.supplyAsync(() -> {
             MeasurementsAirlyResponse response = HttpServiceKt
                     .httpGet(url + "measurements/installation?installationId="+stationID,
                             MeasurementsAirlyResponse.class, headers);
             System.out.println("getted");
             SensorDataAirly[] values = response.getCurrent().getValues();
-            List<Sensor> sensors =  IntStream.range(0,values.length)
+            return IntStream.range(0,values.length)
                     .mapToObj(i -> new Sensor(i, stationID, values[i].getName()))
                     .collect(Collectors.toList());
-            callback.invoke(sensors);
         });
     }
 
     @Override
-    public void getSensorData(Sensor sensor, Function1<List<SensorData>, Unit> callback) {
-        executor.execute(() -> {
+    public CompletableFuture<List<SensorData>> getSensorData(Sensor sensor) {
+        return CompletableFuture.supplyAsync(() -> {
             MeasurementsAirlyResponse response = HttpServiceKt
                     .httpGet(url + "measurements/installation?installationId="+sensor.getStationId(),
                             MeasurementsAirlyResponse.class, headers);
             SensorDataAirly[] curValues = response.getCurrent().getValues();
             MeasurementAirly[] histValues = response.getHistory();
-            List<SensorData> sensorsData =
-                    Stream.concat(
+            return  Stream.concat(
                             Arrays.stream(curValues),
                             Arrays.stream(histValues).map(MeasurementAirly::getValues).flatMap(Arrays::stream))
                     .filter(sensorDataAirly -> sensorDataAirly.getName().equals(sensor.getName()))
@@ -74,18 +72,17 @@ public class AirlyRestService implements IRestService {
                             response.getCurrent().getTillDateTime(),
                             sensorDataAirly.getValue()))
                     .collect(Collectors.toList());
-            callback.invoke(sensorsData);
         });
     }
 
     @Override
-    public void getIndexes(Long stationID, Function1<List<QualityIndex>, Unit> callback) {
-        executor.execute(() -> {
+    public CompletableFuture<List<QualityIndex>> getIndexes(Long stationID) {
+        return CompletableFuture.supplyAsync(() -> {
             MeasurementsAirlyResponse response = HttpServiceKt
                     .httpGet(url + "measurements/installation?installationId="+stationID,
                             MeasurementsAirlyResponse.class, headers);
             IndexAirly[] indexes = response.getCurrent().getIndexes();
-            List<QualityIndex> indexesList = Arrays.stream(indexes)
+            return Arrays.stream(indexes)
                     .map(indexAirly -> {
                         QualityIndex.Builder builder = new QualityIndex.Builder();
                         builder.setDate(response.getCurrent().getFromDateTime());
@@ -94,7 +91,6 @@ public class AirlyRestService implements IRestService {
                         return builder.build();
                     })
                     .collect(Collectors.toList());
-            callback.invoke(indexesList);
         });
     }
 }

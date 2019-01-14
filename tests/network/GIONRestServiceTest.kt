@@ -9,7 +9,7 @@ internal class GIONRestServiceTest {
 
     @Test
     fun getStations() {
-        val stations = gionRestService.getStations{
+        val stations = gionRestService.getStations().thenAccept{
             Assert.assertTrue(2 < it?.size ?: -1)
         }
     }

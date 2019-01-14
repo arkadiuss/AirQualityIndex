@@ -1,18 +1,16 @@
 package network;
 
-import kotlin.Unit;
-import kotlin.jvm.functions.Function1;
 import model.QualityIndex;
 import model.Sensor;
 import model.SensorData;
 import model.Station;
 
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 public interface IRestService {
-
-    void getStations(Function1<List<Station>, Unit> callback);
-    void getSensors(Long stationID, Function1<List<Sensor>, Unit> callback);
-    void getSensorData(Sensor sensor, Function1<List<SensorData>, Unit> callback);
-    void getIndexes(Long stationID, Function1<List<QualityIndex>, Unit> callback);
+    CompletableFuture<List<Station>> getStations();
+    CompletableFuture<List<Sensor>> getSensors(Long stationID);
+    CompletableFuture<List<SensorData>> getSensorData(Sensor sensor);
+    CompletableFuture<List<QualityIndex>> getIndexes(Long stationID);
 }
