@@ -54,6 +54,14 @@ class App{
             LocalDateTime startDate = app.getDate("start-date");
             LocalDateTime endDate = app.getDate("end-date");
             app.showSensorAverageForStation(airQualityService, station,sensor,startDate, endDate);
+        }else if(app.cmd.hasOption("greatest-diff")){
+            if(!app.cmd.hasOption("stations")||!app.cmd.hasOption("start-date")){
+                app.showHelp();
+                System.exit(1);
+            }
+            String[] stations = app.cmd.getOptionValues("stations");
+            LocalDateTime startDate = app.getDate("start-date");
+            app.showGreatestDiffForStations(airQualityService, stations,startDate);
         }
         try{
             Thread.sleep(30000);
@@ -87,11 +95,22 @@ class App{
                 .longOpt("sensor-average")
                 .desc("Show average for a sensor")
                 .build();
+        Option greatestDiff = Option.builder()
+                .longOpt("greatest-diff")
+                .desc("Show greatest diff for stations")
+                .required(false)
+                .build();
 
         Option station = Option.builder("s")
                 .longOpt("station")
                 .desc("Select a station")
                 .numberOfArgs(1)
+                .required(false)
+                .build();
+        Option stations = Option.builder()
+                .longOpt("stations")
+                .desc("Choose stations")
+                .numberOfArgs(2)
                 .required(false)
                 .build();
         Option sensor = Option.builder("sn")
@@ -124,8 +143,12 @@ class App{
         options.addOption(currentIndex);
         options.addOption(sensorStatus);
         options.addOption(sensorAverage);
+        options.addOption(greatestDiff);
+
         options.addOption(station);
         options.addOption(sensor);
+        options.addOption(stations);
+
         options.addOption(date);
         options.addOption(startDate);
         options.addOption(endDate);
@@ -158,6 +181,15 @@ class App{
         airQualityService.getAverageForStationAndSensor(station, sensor, start, end, (st, average) -> {
             System.out.println(st.getName() + " "+ st.getAddress());
             System.out.println("Average is: "+average);
+        });
+    }
+
+    private void showGreatestDiffForStations(AirQualityService airQualityService,
+                                             String[] stations,
+                                             LocalDateTime start){
+        airQualityService.getMostUnstableParameter(stations, start,(st, average) -> {
+            System.out.println(st.getName() + " - sensor");
+            System.out.println("Diff is: "+average);
         });
     }
 

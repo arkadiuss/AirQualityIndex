@@ -11,16 +11,12 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 public class AirQualityDataService {
 
     private final IRestService restService;
     private final ICacheService cacheService;
     private final Boolean forceNetwork;
-    private ExecutorService executor
-            = Executors.newSingleThreadExecutor();
 
     public AirQualityDataService(IRestService restService, ICacheService cacheService, boolean forceNetwork){
         this.restService = restService;

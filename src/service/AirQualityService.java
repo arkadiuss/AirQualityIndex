@@ -1,5 +1,6 @@
 package service;
 
+import kotlin.Pair;
 import model.QualityIndex;
 import model.Sensor;
 import model.SensorData;
@@ -9,6 +10,8 @@ import service.response.ServiceResponse2;
 
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.Arrays;
+import java.util.DoubleSummaryStatistics;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
@@ -57,25 +60,36 @@ public class AirQualityService {
     }
 
     public void getMostUnstableParameter(String[] stationsNames, LocalDateTime startDate,
-                                         ServiceResponse2<Station[], Double> callback){
-//        getStations(stations -> {
-//            List<Station> filtered = stations.stream()
-//                    .filter(st -> Arrays.stream(stationsNames).anyMatch(sn -> st.getName().contains(sn)))
-//                    .collect(Collectors.toList());
-//            int finished = 0;
-//            final List<Stream> connected = Collections.emptyList();
-//            stations.parallelStream()
-//                    .forEach(station -> {
-//                        getSensors(station.getId(), sensors -> {
-//                            sensors.parallelStream()
-//                                    .forEach(sensor -> {
-//                                        getSensorData(sensor, sensorData -> {
-//                                            connected.add(sensorData.stream());
-//                                        });
-//                                    });
-//                        });
-//                    });
-//        });
+                                         ServiceResponse2<Sensor, Double> callback){
+        airQualityDataService.getStations()
+                .thenApplyAsync(stations ->
+                        stations.stream()
+                            .filter(station -> Arrays.stream(stationsNames)
+                                    .anyMatch(name -> station.getName().contains(name)))
+                            .map(station -> airQualityDataService.getSensors(station.getId()).join())
+                            .reduce((sensors, sensors2) -> {
+                                sensors.addAll(sensors2);
+                                return sensors;
+                            }).get())
+                .thenAcceptAsync(sensors -> {
+                        sensors.stream()
+                            .map(sensor ->
+                                    new Pair<>(sensor, airQualityDataService.getSensorData(sensor).join()))
+                            .map(sensorData -> {
+                                    DoubleSummaryStatistics filData = sensorData.component2().stream()
+                                            .filter(data -> data.getDate().isAfter(startDate))
+                                            .mapToDouble(SensorData::getValue)
+                                            .summaryStatistics();
+                                    Double min = filData.getMin();
+                                    Double max = filData.getMax();
+                                    return new Pair<>(sensorData.component1(), max - min);
+                            })
+                            .max((o1, o2) -> (int) (o1.component2() - o2.component2()))
+                            .ifPresent(sensorDoublePair ->
+                                    callback.onResponse(
+                                            sensorDoublePair.component1(),
+                                            sensorDoublePair.component2()));
+                });
 
     }
 
