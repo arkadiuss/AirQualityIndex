@@ -62,16 +62,14 @@ public class AirQualityService {
     public void getMostUnstableParameter(String[] stationsNames, LocalDateTime startDate,
                                          ServiceResponse2<Sensor, Double> callback){
         airQualityDataService.getStations()
-                .thenApplyAsync(stations ->{
-                                System.out.println(Arrays.toString(stations.stream().map(Station::getName).toArray()));
-                    return stations.stream()
+                .thenApplyAsync(stations -> stations.stream()
                             .filter(station -> Arrays.stream(stationsNames)
                                     .anyMatch(name -> station.getName().contains(name)))
                             .map(station -> airQualityDataService.getSensors(station.getId()).join())
                             .reduce((sensors, sensors2) -> {
                                 sensors.addAll(sensors2);
                                 return sensors;
-                            }).get();})
+                            }).get())
                 .thenAcceptAsync(sensors -> {
                         sensors.stream()
                             .map(sensor ->
@@ -178,8 +176,26 @@ public class AirQualityService {
                                         .get();
                         return new Pair<>(min, max);
                 });
+    }
 
-
+    public CompletableFuture<List<Pair<Station, SensorData>>> getForStationsAndParam(String[] stationsNames, String sensorName,
+                                                                                     LocalDateTime startDate, LocalDateTime endDate){
+        return airQualityDataService.getStations()
+                .thenApplyAsync(stations ->
+                        stations.stream()
+                                .filter(station -> Arrays.stream(stationsNames)
+                                .anyMatch(name -> station.getName().contains(name)))
+                                .map(station -> new Pair<>(station, getSensorByName(station.getId(),sensorName).join()))
+                                .collect(Collectors.toList()))
+                .thenApplyAsync(data ->
+                        data.stream()
+                            .map(p -> new Pair<>(p.getFirst(), airQualityDataService.getSensorData(p.getSecond()).join()))
+                            .flatMap(p ->
+                                    p.getSecond().stream()
+                                        .map(sensorData -> new Pair<>(p.getFirst(), sensorData)))
+                            .filter(p -> p.getSecond().getDate().isAfter(startDate) &&
+                                    p.getSecond().getDate().isBefore(endDate))
+                            .collect(Collectors.toList()));
     }
 
     private CompletableFuture<Station> getStationByName(String stationName) {

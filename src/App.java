@@ -5,6 +5,8 @@ import service.data.GIONAirQualityDataService;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Comparator;
+import java.util.DoubleSummaryStatistics;
 import java.util.stream.Stream;
 
 class App{
@@ -25,13 +27,14 @@ class App{
     private static final String MINIMAL_PARAM = "minimal-param";
     private static final String EXCEEDING = "exceeding";
     private static final String MINMAX = "minmax";
+    private static final String GRAPH = "graph";
 
     public static void main(String[] args){
         App app = new App();
         try {
             app.cmd = app.parser.parse(app.options, args);
         } catch (ParseException e) {
-            e.printStackTrace();
+            System.out.println("Unrecognized option");
             app.showHelp();
             System.exit( 1);
         }
@@ -77,6 +80,13 @@ class App{
             app.validate(SENSOR);
             String sensor = app.cmd.getOptionValue(SENSOR);
             app.showMinAndMaxForParam(airQualityService, sensor);
+        }else if(app.cmd.hasOption(GRAPH)){
+            app.validate(STATIONS, SENSOR, START_DATE, END_DATE);
+            String[] stations = app.cmd.getOptionValues(STATIONS);
+            String sensor = app.cmd.getOptionValue(SENSOR);
+            LocalDateTime startDate = app.getDate(START_DATE);
+            LocalDateTime endDate = app.getDate(END_DATE);
+            app.showGraph(airQualityService, stations, sensor, startDate, endDate);
         }
         try{
             Thread.sleep(30000);
@@ -130,6 +140,11 @@ class App{
                 .desc("Minimal and maximal value for param")
                 .required(false)
                 .build();
+        Option graph = Option.builder()
+                .longOpt(GRAPH)
+                .desc("Show graph for statios")
+                .required(false)
+                .build();
 
         Option station = Option.builder("s")
                 .longOpt(STATION)
@@ -170,7 +185,7 @@ class App{
                 .build();
 
         Stream.of(api, currentIndex, sensorStatus, sensorAverage,
-                greatestDiff, minimalParam, exceeding, minmax, station, sensor,
+                greatestDiff, minimalParam, exceeding, minmax, graph, station, sensor,
                 stations, date, startDate, endDate)
                 .forEach(options::addOption);
         return options;
@@ -185,6 +200,7 @@ class App{
     private void validate(String... requiredOptions){
         for(String opt : requiredOptions){
             if(!cmd.hasOption(opt)){
+                System.out.println("Argument required: "+opt);
                 showHelp();
                 System.exit(1);}
         }
@@ -252,6 +268,28 @@ class App{
                     System.out.println(minmax.getSecond().getFirst().getName());
                     System.out.println(minmax.getSecond().getThird().getMax());
                 });
+    }
+
+    private void showGraph(AirQualityService airQualityService, String[] stationNames, String sensorName,
+                           LocalDateTime startDate, LocalDateTime endDate){
+        airQualityService.getForStationsAndParam(stationNames, sensorName, startDate, endDate)
+                .thenAccept(data -> {
+                    DoubleSummaryStatistics summary = data.stream()
+                            .mapToDouble(value -> value.getSecond().getValue())
+                            .summaryStatistics();
+                    Double step = (summary.getMax()-summary.getMin())/15;
+                    data.sort(Comparator.comparing(o -> o.getSecond().getDate()));
+                    data.forEach(entry -> {
+                        System.out.print(entry.getFirst().getName()
+                                + " ("+entry.getSecond().getDate()+") "
+                                + " "+entry.getSecond().getValue());
+                        printNStairs((int) Math.floor(entry.getSecond().getValue()/step));
+                    });
+                });
+    }
+
+    private void printNStairs(int n){
+        System.out.println(" "+"█".repeat(n));
     }
 
 }
