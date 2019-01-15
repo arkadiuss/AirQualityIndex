@@ -30,13 +30,13 @@ public class AirQualityDataService {
         if(!forceNetwork && !isExpired(key)){
             return CompletableFuture.completedFuture(getFromCache(key));
         }else{
-            return restService.getStations().thenCompose(stations ->
-                    CompletableFuture.completedFuture(saveOrGetFromCache(key, stations)));
+            return restService.getStations().thenApply(stations ->
+                    saveOrGetFromCache(key, stations));
         }
     }
 
     public CompletableFuture<List<Sensor>> getSensors(Long stationId){
-        final String key = "sensors";
+        final String key = "sensors"+stationId;
         if(!forceNetwork && !isExpired(key)){
             return CompletableFuture.completedFuture(getFromCache(key));
         }else{
@@ -47,7 +47,7 @@ public class AirQualityDataService {
     }
 
     public CompletableFuture<List<SensorData>> getSensorData(Sensor sensor){
-        final String key = "sensorData";
+        final String key = "sensorData"+sensor.getId();
         if(!forceNetwork && !isExpired(key)){
             return CompletableFuture.completedFuture(getFromCache(key));
         }else{
@@ -57,7 +57,7 @@ public class AirQualityDataService {
     }
 
     public CompletableFuture<List<QualityIndex>> getIndexes(Long stationId){
-        final String key = "indices";
+        final String key = "indices"+stationId;
         if(!forceNetwork && !isExpired(key)){
             return CompletableFuture.completedFuture(getFromCache(key));
         }else{

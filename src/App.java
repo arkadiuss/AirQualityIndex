@@ -5,11 +5,25 @@ import service.data.GIONAirQualityDataService;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.stream.Stream;
 
 class App{
     private Options options = createOptions();
     private CommandLineParser parser = new DefaultParser();
     private CommandLine cmd;
+    private static final String API = "api";
+    private static final String STATION = "station";
+    private static final String SENSOR = "sensor";
+    private static final String STATIONS = "stations";
+    private static final String START_DATE = "start-date";
+    private static final String DATE = "date";
+    private static final String END_DATE = "end-date";
+    private static final String CURRECT_INDEX = "current-index";
+    private static final String SENSOR_STATUS = "sensor-status";
+    private static final String SENSOR_AVERAGE = "sensor-average";
+    private static final String GREATEST_DIFF = "greatest-diff";
+    private static final String MINIMAL_PARAM = "minimal-param";
+    private static final String EXCEEDING = "exceeding";
 
     public static void main(String[] args){
         App app = new App();
@@ -21,47 +35,43 @@ class App{
             System.exit( 1);
         }
         AirQualityService airQualityService;
-        if(app.cmd.hasOption("api") &&
-            app.cmd.getOptionValue("api").equals("airly")){
+        if(app.cmd.hasOption(API) &&
+            app.cmd.getOptionValue(API).equals("airly")){
             airQualityService = new AirQualityService(new AirlyAirQualityDataService());
         } else{
-            airQualityService= new AirQualityService(new GIONAirQualityDataService());
+            airQualityService= new AirQualityService(new GIONAirQualityDataService(false));
         }
-        if(app.cmd.hasOption("current-index")){
-            if(!app.cmd.hasOption("station")){
-                app.showHelp();
-                System.exit(1);
-            }
-            String station = app.cmd.getOptionValue("station");
+        if(app.cmd.hasOption(CURRECT_INDEX)){
+            app.validate(STATION);
+            String station = app.cmd.getOptionValue(STATION);
             app.showCurrentIndex(airQualityService, station);
-        }else if(app.cmd.hasOption("sensor-status")){
-            if(!app.cmd.hasOption("station")||!app.cmd.hasOption("sensor")||!app.cmd.hasOption("date")){
-                app.showHelp();
-                System.exit(1);
-            }
-            String station = app.cmd.getOptionValue("station");
-            String sensor = app.cmd.getOptionValue("sensor");
-            LocalDateTime date = app.getDate("date");
+        }else if(app.cmd.hasOption(SENSOR_STATUS)){
+            app.validate(STATION, SENSOR, DATE);
+            String station = app.cmd.getOptionValue(STATION);
+            String sensor = app.cmd.getOptionValue(SENSOR);
+            LocalDateTime date = app.getDate(DATE);
             app.showSensorDataForStationAndParam(airQualityService, station, sensor, date);
-        }else if(app.cmd.hasOption("sensor-average")){
-            if(!app.cmd.hasOption("station")||!app.cmd.hasOption("sensor")||
-                    !app.cmd.hasOption("start-date")||!app.cmd.hasOption("end-date")){
-                app.showHelp();
-                System.exit(1);
-            }
-            String station = app.cmd.getOptionValue("station");
-            String sensor = app.cmd.getOptionValue("sensor");
-            LocalDateTime startDate = app.getDate("start-date");
-            LocalDateTime endDate = app.getDate("end-date");
+        }else if(app.cmd.hasOption(SENSOR_AVERAGE)){
+            app.validate(STATION, SENSOR, START_DATE, END_DATE);
+            String station = app.cmd.getOptionValue(STATION);
+            String sensor = app.cmd.getOptionValue(SENSOR);
+            LocalDateTime startDate = app.getDate(START_DATE);
+            LocalDateTime endDate = app.getDate(END_DATE);
             app.showSensorAverageForStation(airQualityService, station,sensor,startDate, endDate);
-        }else if(app.cmd.hasOption("greatest-diff")){
-            if(!app.cmd.hasOption("stations")||!app.cmd.hasOption("start-date")){
-                app.showHelp();
-                System.exit(1);
-            }
-            String[] stations = app.cmd.getOptionValues("stations");
-            LocalDateTime startDate = app.getDate("start-date");
+        }else if(app.cmd.hasOption(GREATEST_DIFF)){
+            app.validate(STATIONS, START_DATE);
+            String[] stations = app.cmd.getOptionValues(STATIONS);
+            LocalDateTime startDate = app.getDate(START_DATE);
             app.showGreatestDiffForStations(airQualityService, stations,startDate);
+        }else if(app.cmd.hasOption(MINIMAL_PARAM)){
+            app.validate(DATE);
+            LocalDateTime date = app.getDate(DATE);
+            app.showMinimalParam(airQualityService, date);
+        }else if(app.cmd.hasOption(EXCEEDING)){
+            app.validate(STATION, DATE);
+            String station = app.cmd.getOptionValue(STATION);
+            LocalDateTime date = app.getDate(DATE);
+            app.showExceeding(airQualityService, station, date);
         }
         try{
             Thread.sleep(30000);
@@ -78,80 +88,81 @@ class App{
     private Options createOptions(){
         Options options = new Options();
         Option api = Option.builder("a")
-                .longOpt("api")
+                .longOpt(API)
                 .desc("Select an api to use")
                 .numberOfArgs(1)
                 .build();
 
         Option currentIndex = Option.builder()
-                .longOpt("current-index")
+                .longOpt(CURRECT_INDEX)
                 .desc("Show current index for a station")
                 .build();
         Option sensorStatus = Option.builder()
-                .longOpt("sensor-status")
+                .longOpt(SENSOR_STATUS)
                 .desc("Show current level for sensor")
                 .build();
         Option sensorAverage = Option.builder()
-                .longOpt("sensor-average")
+                .longOpt(SENSOR_AVERAGE)
                 .desc("Show average for a sensor")
                 .build();
         Option greatestDiff = Option.builder()
-                .longOpt("greatest-diff")
+                .longOpt(GREATEST_DIFF)
                 .desc("Show greatest diff for stations")
+                .required(false)
+                .build();
+        Option minimalParam = Option.builder()
+                .longOpt(MINIMAL_PARAM)
+                .desc("Show param with lowest value at the point of the time")
+                .required(false)
+                .build();
+        Option exceeding = Option.builder()
+                .longOpt(EXCEEDING)
+                .desc("Parameters that exceed a norm for station and time")
                 .required(false)
                 .build();
 
         Option station = Option.builder("s")
-                .longOpt("station")
+                .longOpt(STATION)
                 .desc("Select a station")
                 .numberOfArgs(1)
                 .required(false)
                 .build();
         Option stations = Option.builder()
-                .longOpt("stations")
+                .longOpt(STATIONS)
                 .desc("Choose stations")
                 .numberOfArgs(2)
                 .required(false)
                 .build();
         Option sensor = Option.builder("sn")
-                .longOpt("sensor")
+                .longOpt(SENSOR)
                 .desc("Select a sensor")
                 .numberOfArgs(1)
                 .required(false)
                 .build();
 
         Option date = Option.builder("d")
-                .longOpt("date")
+                .longOpt(DATE)
                 .desc("Specify a date and time")
                 .numberOfArgs(2)
                 .required(false)
                 .build();
         Option startDate = Option.builder()
-                .longOpt("start-date")
+                .longOpt(START_DATE)
                 .desc("Specify a start date and time")
                 .numberOfArgs(2)
                 .required(false)
                 .build();
         Option endDate = Option.builder()
-                .longOpt("end-date")
+                .longOpt(END_DATE)
                 .desc("Specify a start date and time")
                 .numberOfArgs(2)
                 .required(false)
                 .build();
 
-        options.addOption(api);
-        options.addOption(currentIndex);
-        options.addOption(sensorStatus);
-        options.addOption(sensorAverage);
-        options.addOption(greatestDiff);
-
-        options.addOption(station);
-        options.addOption(sensor);
-        options.addOption(stations);
-
-        options.addOption(date);
-        options.addOption(startDate);
-        options.addOption(endDate);
+        Stream.of(api, currentIndex, sensorStatus, sensorAverage,
+                greatestDiff, minimalParam, exceeding, station, sensor,
+                stations, date, startDate, endDate)
+                .forEach(options::addOption);
         return options;
     }
 
@@ -159,6 +170,14 @@ class App{
         String[] parts = cmd.getOptionValues(name);
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
         return LocalDateTime.parse(parts[0]+" "+parts[1], formatter);
+    }
+
+    private void validate(String... requiredOptions){
+        for(String opt : requiredOptions){
+            if(!cmd.hasOption(opt)){
+                showHelp();
+                System.exit(1);}
+        }
     }
 
     private void showCurrentIndex(AirQualityService airQualityService, String station){
@@ -191,6 +210,26 @@ class App{
             System.out.println(st.getName() + " - sensor");
             System.out.println("Diff is: "+average);
         });
+    }
+
+    private void showMinimalParam(AirQualityService airQualityService, LocalDateTime date){
+        airQualityService.getMinimalParameter(date, (sen, mini) -> {
+            System.out.println(sen.getName() + " - sensor");
+            System.out.println("Mini is: "+mini);
+        });
+    }
+
+    private void showExceeding(AirQualityService airQualityService, String stationName, LocalDateTime date){
+        airQualityService.getExceededParamsForStation(stationName, date)
+                .thenAccept(triples -> {
+                    System.out.println("Exceeding params");
+                    triples.stream()
+                            .forEach(triple -> {
+                                System.out.println(triple.component1().getName() + " - station");
+                                System.out.println(triple.component2().getName() + " - sensor");
+                                System.out.println("Value is: "+triple.component3().getValue());
+                            });
+                });
     }
 
 }
