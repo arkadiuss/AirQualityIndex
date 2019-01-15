@@ -24,6 +24,7 @@ class App{
     private static final String GREATEST_DIFF = "greatest-diff";
     private static final String MINIMAL_PARAM = "minimal-param";
     private static final String EXCEEDING = "exceeding";
+    private static final String MINMAX = "minmax";
 
     public static void main(String[] args){
         App app = new App();
@@ -39,7 +40,7 @@ class App{
             app.cmd.getOptionValue(API).equals("airly")){
             airQualityService = new AirQualityService(new AirlyAirQualityDataService());
         } else{
-            airQualityService= new AirQualityService(new GIONAirQualityDataService(false));
+            airQualityService= new AirQualityService(new GIONAirQualityDataService());
         }
         if(app.cmd.hasOption(CURRECT_INDEX)){
             app.validate(STATION);
@@ -72,6 +73,10 @@ class App{
             String station = app.cmd.getOptionValue(STATION);
             LocalDateTime date = app.getDate(DATE);
             app.showExceeding(airQualityService, station, date);
+        }else if(app.cmd.hasOption(MINMAX)){
+            app.validate(SENSOR);
+            String sensor = app.cmd.getOptionValue(SENSOR);
+            app.showMinAndMaxForParam(airQualityService, sensor);
         }
         try{
             Thread.sleep(30000);
@@ -120,6 +125,11 @@ class App{
                 .desc("Parameters that exceed a norm for station and time")
                 .required(false)
                 .build();
+        Option minmax = Option.builder()
+                .longOpt(MINMAX)
+                .desc("Minimal and maximal value for param")
+                .required(false)
+                .build();
 
         Option station = Option.builder("s")
                 .longOpt(STATION)
@@ -160,7 +170,7 @@ class App{
                 .build();
 
         Stream.of(api, currentIndex, sensorStatus, sensorAverage,
-                greatestDiff, minimalParam, exceeding, station, sensor,
+                greatestDiff, minimalParam, exceeding, minmax, station, sensor,
                 stations, date, startDate, endDate)
                 .forEach(options::addOption);
         return options;
@@ -229,6 +239,18 @@ class App{
                                 System.out.println(triple.component2().getName() + " - sensor");
                                 System.out.println("Value is: "+triple.component3().getValue());
                             });
+                });
+    }
+
+    private void showMinAndMaxForParam(AirQualityService airQualityService, String sensorName){
+        airQualityService.minMaxForParameter(sensorName)
+                .thenAccept(minmax -> {
+                    System.out.println("Minimal");
+                    System.out.println(minmax.getFirst().getFirst().getName());
+                    System.out.println(minmax.getFirst().getThird().getMin());
+                    System.out.println("Maximal");
+                    System.out.println(minmax.getSecond().getFirst().getName());
+                    System.out.println(minmax.getSecond().getThird().getMax());
                 });
     }
 

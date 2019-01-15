@@ -150,6 +150,38 @@ public class AirQualityService {
                 );
     }
 
+    public CompletableFuture<Pair<Triple<Station, Sensor, DoubleSummaryStatistics>,Triple<Station, Sensor, DoubleSummaryStatistics>>> minMaxForParameter(String sensorName){
+        return airQualityDataService.getStations()
+                .thenApplyAsync(stations -> stations.stream()
+                            .map(station -> new Pair<>(station, airQualityDataService.getSensors(station.getId()).join()))
+                            .map(stationListPair ->
+                                     new Pair<>(stationListPair.component1(),
+                                            stationListPair.component2().stream()
+                                                    .filter(sensor -> sensor.getName().contains(sensorName))
+                                                    .findFirst().orElse(null)))
+                            .filter(stationSensorPair -> stationSensorPair.getSecond() != null)
+                            .collect(Collectors.toList()))
+                .thenApplyAsync(data ->
+                        data.stream()
+                            .map(pair -> new Triple<>(pair.getFirst(),
+                                            pair.getSecond(),
+                                            airQualityDataService.getSensorData(pair.getSecond()).join()))
+                            .map(t -> new Triple<>(t.getFirst(), t.getSecond(),
+                                    t.getThird().stream().mapToDouble(SensorData::getValue).summaryStatistics()))
+                            .collect(Collectors.toList()))
+                .thenApply(data -> {
+                        Triple<Station, Sensor, DoubleSummaryStatistics> min = data.stream()
+                                        .min((o1, o2) -> (int) (o1.getThird().getMin() - o2.getThird().getMin()))
+                                        .get();
+                        Triple<Station, Sensor, DoubleSummaryStatistics> max = data.stream()
+                                        .max((o1, o2) -> (int) (o1.getThird().getMax() - o2.getThird().getMax()))
+                                        .get();
+                        return new Pair<>(min, max);
+                });
+
+
+    }
+
     private CompletableFuture<Station> getStationByName(String stationName) {
         return airQualityDataService.getStations().thenApply(stations ->
                 stations.stream()
@@ -164,7 +196,6 @@ public class AirQualityService {
                     .findFirst()
                     .get()));
     }
-
 
     private Long secondsDiff(LocalDateTime date1, LocalDateTime date2){
         return Math.abs(date1.until(date2, ChronoUnit.SECONDS));
