@@ -48,7 +48,6 @@ public class AirlyRestService implements IRestService {
             MeasurementsAirlyResponse response = HttpServiceKt
                     .httpGet(url + "measurements/installation?installationId="+stationID,
                             MeasurementsAirlyResponse.class, headers);
-            System.out.println("getted");
             SensorDataAirly[] values = response.getCurrent().getValues();
             return IntStream.range(0,values.length)
                     .mapToObj(i -> new Sensor(i, stationID, values[i].getName()))

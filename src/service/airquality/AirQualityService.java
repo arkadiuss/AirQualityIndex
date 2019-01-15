@@ -1,4 +1,4 @@
-package service;
+package service.airquality;
 
 import kotlin.Pair;
 import kotlin.Triple;
@@ -7,16 +7,14 @@ import model.Sensor;
 import model.SensorData;
 import model.Station;
 import service.data.AirQualityDataService;
-import service.response.ServiceResponse2;
 
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
-import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
-public class AirQualityService {
+public class AirQualityService implements IAirQualityService {
 
     private final AirQualityDataService airQualityDataService;
 
@@ -24,44 +22,38 @@ public class AirQualityService {
         this.airQualityDataService = airQualityDataService;
     }
 
-    public void getCurrentIndexForStation(String stationName, Consumer<List<QualityIndex>> callback){
-        getStationByName(stationName)
-                .thenCompose(station -> airQualityDataService.getIndexes(station.getId()))
-                .thenAccept(callback);
+    public CompletableFuture<List<QualityIndex>> getCurrentIndexForStation(String stationName){
+        return getStationByName(stationName)
+                .thenCompose(station -> airQualityDataService.getIndexes(station.getId()));
     }
 
-    public void getSensorDataForStationAndDate(String stationName, String sensorName, LocalDateTime date,
-                                               ServiceResponse2<Station, SensorData> callback){
-        getStationByName(stationName).thenCompose(station ->
+    public CompletableFuture<Pair<Station, SensorData>> getSensorDataForStationAndDate(String stationName, String sensorName, LocalDateTime date){
+        return getStationByName(stationName).thenCompose(station ->
                 getSensorByName(station.getId(),sensorName).thenCompose(sensor ->
-                        airQualityDataService.getSensorData(sensor).thenAccept(sensorData -> {
+                        airQualityDataService.getSensorData(sensor).thenApply(sensorData ->
                             sensorData.stream()
                                     .min((o1, o2) ->
                                             (int) (secondsDiff(o1.getDate(), date) - secondsDiff(o2.getDate(),date)))
-                                    .ifPresent(sensorEntry -> callback.onResponse(station, sensorEntry));
-
-                        })));
+                                    .map(sensorEntry -> new Pair<>(station, sensorEntry)).get())));
     }
 
-    public void getAverageForStationAndSensor(String stationName, String sensorName,
-                                              LocalDateTime startDate, LocalDateTime endDate,
-                                              ServiceResponse2<Station, Double> callback){
-        getStationByName(stationName).thenCompose(station ->
+    public CompletableFuture<Pair<Station, Double>> getAverageForStationAndSensor(String stationName, String sensorName,
+                                                                                  LocalDateTime startDate, LocalDateTime endDate){
+        return getStationByName(stationName).thenCompose(station ->
                 getSensorByName(station.getId(),sensorName).thenCompose(sensor ->
-                        airQualityDataService.getSensorData(sensor).thenAccept(sensorData -> {
+                        airQualityDataService.getSensorData(sensor).thenApply(sensorData -> {
                             Double avg = sensorData.stream()
                                     .filter(sensorEntry ->
                                             sensorEntry.getDate().isAfter(startDate) &&
                                                     sensorEntry.getDate().isBefore(endDate))
                                     .mapToDouble(SensorData::getValue)
                                     .average().orElse(0);
-                            callback.onResponse(station, avg);
+                            return new Pair<>(station, avg);
                         })));
     }
 
-    public void getMostUnstableParameter(String[] stationsNames, LocalDateTime startDate,
-                                         ServiceResponse2<Sensor, Double> callback){
-        airQualityDataService.getStations()
+    public CompletableFuture<Pair<Sensor, Double>> getMostUnstableParameter(String[] stationsNames, LocalDateTime startDate){
+        return airQualityDataService.getStations()
                 .thenApplyAsync(stations -> stations.stream()
                             .filter(station -> Arrays.stream(stationsNames)
                                     .anyMatch(name -> station.getName().contains(name)))
@@ -70,7 +62,7 @@ public class AirQualityService {
                                 sensors.addAll(sensors2);
                                 return sensors;
                             }).get())
-                .thenAcceptAsync(sensors -> {
+                .thenApplyAsync(sensors ->
                         sensors.stream()
                             .map(sensor ->
                                     new Pair<>(sensor, airQualityDataService.getSensorData(sensor).join()))
@@ -84,16 +76,11 @@ public class AirQualityService {
                                     return new Pair<>(sensorData.component1(), max - min);
                             })
                             .max((o1, o2) -> (int) (o1.component2() - o2.component2()))
-                            .ifPresent(sensorDoublePair ->
-                                    callback.onResponse(
-                                            sensorDoublePair.component1(),
-                                            sensorDoublePair.component2()));
-                });
-
+                            .get());
     }
 
-    public void getMinimalParameter(LocalDateTime date, ServiceResponse2<Sensor, Double> callback){
-        airQualityDataService.getStations()
+    public CompletableFuture<Pair<Sensor, Double>> getMinimalParameter(LocalDateTime date){
+        return airQualityDataService.getStations()
                 .thenApplyAsync(stations ->
                         stations.stream()
                                 .map(station ->
@@ -102,7 +89,7 @@ public class AirQualityService {
                                         sensors.component2().stream()
                                             .map(sensor -> new Pair<>(sensors.component1(), sensor)))
                                 .collect(Collectors.toList()))
-                .thenAcceptAsync(sensors -> {
+                .thenApplyAsync(sensors ->
                         sensors.stream()
                                 .map(sensor ->
                                         new Triple<>(sensor.component1(), sensor.component2(),
@@ -115,8 +102,7 @@ public class AirQualityService {
                                         .get()))
 
                                 .min((o1, o2) -> (int) (o1.component3().getValue() - o2.component3().getValue()))
-                                .ifPresent(val -> callback.onResponse(val.component2(), val.component3().getValue()));
-                });
+                                .map(val -> new Pair<>(val.getSecond(), val.getThird().getValue())).get());
     }
 
     public CompletableFuture<List<Triple<Station, Sensor, SensorData>>> getExceededParamsForStation(String stationName, LocalDateTime date){

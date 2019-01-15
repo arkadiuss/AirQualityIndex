@@ -1,5 +1,6 @@
 import org.apache.commons.cli.*;
-import service.AirQualityService;
+import service.airquality.AirQualityService;
+import service.airquality.IAirQualityService;
 import service.data.AirlyAirQualityDataService;
 import service.data.GIONAirQualityDataService;
 
@@ -38,7 +39,7 @@ class App{
             app.showHelp();
             System.exit( 1);
         }
-        AirQualityService airQualityService;
+        IAirQualityService airQualityService;
         if(app.cmd.hasOption(API) &&
             app.cmd.getOptionValue(API).equals("airly")){
             airQualityService = new AirQualityService(new AirlyAirQualityDataService());
@@ -87,11 +88,10 @@ class App{
             LocalDateTime startDate = app.getDate(START_DATE);
             LocalDateTime endDate = app.getDate(END_DATE);
             app.showGraph(airQualityService, stations, sensor, startDate, endDate);
-        }
-        try{
-            Thread.sleep(30000);
-        }catch (InterruptedException e) {
-            e.printStackTrace();
+        }else{
+            System.out.println("Unrecognized command");
+            app.showHelp();
+            System.exit(1);
         }
     }
 
@@ -206,46 +206,46 @@ class App{
         }
     }
 
-    private void showCurrentIndex(AirQualityService airQualityService, String station){
-        airQualityService.getCurrentIndexForStation(station, qualityIndices ->
-                qualityIndices.forEach(i -> System.out.println(i.getDate() +" "+i.getName()+" "+i.getLevel())));
+    private void showCurrentIndex(IAirQualityService airQualityService, String station){
+        airQualityService.getCurrentIndexForStation(station).thenAccept(qualityIndices ->
+                qualityIndices.forEach(i -> System.out.println(i.getDate() +" "+i.getName()+" "+i.getLevel()))).join();
     }
 
-    private void showSensorDataForStationAndParam(AirQualityService airQualityService,
+    private void showSensorDataForStationAndParam(IAirQualityService airQualityService,
                                                   String station, String sensor, LocalDateTime date){
-        airQualityService.getSensorDataForStationAndDate(station, sensor, date, (st, sensorData) -> {
-            System.out.println(st.getName() + " "+ st.getAddress());
-            System.out.println(sensorData.getDate() + " " +
-                    sensorData.getName() + " " + sensorData.getValue());
-        });
+        airQualityService.getSensorDataForStationAndDate(station, sensor, date).thenAccept(data -> {
+            System.out.println(data.getFirst().getName() + " "+ data.getFirst().getAddress());
+            System.out.println(data.getSecond().getDate() + " " +
+                    data.getSecond().getName() + " " + data.getSecond().getValue());
+        }).join();
     }
 
-    private void showSensorAverageForStation(AirQualityService airQualityService,
+    private void showSensorAverageForStation(IAirQualityService airQualityService,
                                              String station, String sensor,
                                              LocalDateTime start, LocalDateTime end){
-        airQualityService.getAverageForStationAndSensor(station, sensor, start, end, (st, average) -> {
-            System.out.println(st.getName() + " "+ st.getAddress());
-            System.out.println("Average is: "+average);
-        });
+        airQualityService.getAverageForStationAndSensor(station, sensor, start, end).thenAccept(data -> {
+            System.out.println(data.getFirst().getName() + " "+ data.getFirst().getAddress());
+            System.out.println("Average is: "+data.getSecond());
+        }).join();
     }
 
-    private void showGreatestDiffForStations(AirQualityService airQualityService,
+    private void showGreatestDiffForStations(IAirQualityService airQualityService,
                                              String[] stations,
                                              LocalDateTime start){
-        airQualityService.getMostUnstableParameter(stations, start,(st, average) -> {
-            System.out.println(st.getName() + " - sensor");
-            System.out.println("Diff is: "+average);
-        });
+        airQualityService.getMostUnstableParameter(stations, start).thenAccept(data -> {
+            System.out.println(data.getFirst().getName() + " - sensor");
+            System.out.println("Diff is: " +  data.getSecond());
+        }).join();
     }
 
-    private void showMinimalParam(AirQualityService airQualityService, LocalDateTime date){
-        airQualityService.getMinimalParameter(date, (sen, mini) -> {
-            System.out.println(sen.getName() + " - sensor");
-            System.out.println("Mini is: "+mini);
-        });
+    private void showMinimalParam(IAirQualityService airQualityService, LocalDateTime date){
+        airQualityService.getMinimalParameter(date).thenAccept( data -> {
+            System.out.println(data.getFirst().getName() + " - sensor");
+            System.out.println("Mini is: "+data.getSecond());
+        }).join();
     }
 
-    private void showExceeding(AirQualityService airQualityService, String stationName, LocalDateTime date){
+    private void showExceeding(IAirQualityService airQualityService, String stationName, LocalDateTime date){
         airQualityService.getExceededParamsForStation(stationName, date)
                 .thenAccept(triples -> {
                     System.out.println("Exceeding params");
@@ -255,10 +255,10 @@ class App{
                                 System.out.println(triple.component2().getName() + " - sensor");
                                 System.out.println("Value is: "+triple.component3().getValue());
                             });
-                });
+                }).join();
     }
 
-    private void showMinAndMaxForParam(AirQualityService airQualityService, String sensorName){
+    private void showMinAndMaxForParam(IAirQualityService airQualityService, String sensorName){
         airQualityService.minMaxForParameter(sensorName)
                 .thenAccept(minmax -> {
                     System.out.println("Minimal");
@@ -267,10 +267,10 @@ class App{
                     System.out.println("Maximal");
                     System.out.println(minmax.getSecond().getFirst().getName());
                     System.out.println(minmax.getSecond().getThird().getMax());
-                });
+                }).join();
     }
 
-    private void showGraph(AirQualityService airQualityService, String[] stationNames, String sensorName,
+    private void showGraph(IAirQualityService airQualityService, String[] stationNames, String sensorName,
                            LocalDateTime startDate, LocalDateTime endDate){
         airQualityService.getForStationsAndParam(stationNames, sensorName, startDate, endDate)
                 .thenAccept(data -> {
@@ -285,7 +285,7 @@ class App{
                                 + " "+entry.getSecond().getValue());
                         printNStairs((int) Math.floor(entry.getSecond().getValue()/step));
                     });
-                });
+                }).join();
     }
 
     private void printNStairs(int n){
