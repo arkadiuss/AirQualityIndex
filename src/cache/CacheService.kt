@@ -6,7 +6,7 @@ import java.time.LocalDateTime
 import java.time.ZoneId
 import java.util.*
 
-class CacheService(storageName: String) : ICacheService{
+open class CacheService(storageName: String = "default") : ICacheService{
 
     private val PATH = "cache/"
     private val directory: File = File("$PATH$storageName")
