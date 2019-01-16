@@ -24,6 +24,9 @@ public class AirlyRestService implements IRestService {
         headers.put("apikey", apiKey);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public CompletableFuture<List<Station>> getStations() {
         return CompletableFuture.supplyAsync(() -> {
@@ -42,6 +45,9 @@ public class AirlyRestService implements IRestService {
         });
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public CompletableFuture<List<Sensor>> getSensors(Long stationID) {
         return CompletableFuture.supplyAsync(() -> {
@@ -55,6 +61,9 @@ public class AirlyRestService implements IRestService {
         });
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public CompletableFuture<List<SensorData>> getSensorData(Sensor sensor) {
         return CompletableFuture.supplyAsync(() -> {
@@ -74,6 +83,9 @@ public class AirlyRestService implements IRestService {
         });
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public CompletableFuture<List<QualityIndex>> getIndexes(Long stationID) {
         return CompletableFuture.supplyAsync(() -> {

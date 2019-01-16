@@ -15,6 +15,11 @@ import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
+/**
+ * {@inheritDoc}
+ *
+ * Implementation using stream interface. It turns out that is not always the good solution to use only streams
+ */
 public class AirQualityService implements IAirQualityService {
 
     private final AirQualityDataService airQualityDataService;
@@ -23,12 +28,19 @@ public class AirQualityService implements IAirQualityService {
         this.airQualityDataService = airQualityDataService;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     public CompletableFuture<List<QualityIndex>> getCurrentIndexForStation(String stationName){
         return getStationByName(stationName)
                 .thenCompose(station -> airQualityDataService.getIndexes(station.getId()));
     }
 
-    public CompletableFuture<Pair<Station, SensorData>> getSensorDataForStationAndDate(String stationName, String sensorName, LocalDateTime date){
+    /**
+     * {@inheritDoc}
+     */
+    public CompletableFuture<Pair<Station, SensorData>> getSensorDataForStationAndDate(String stationName, String sensorName,
+                                                                                       LocalDateTime date){
         return getStationByName(stationName).thenCompose(station ->
                 getSensorByName(station.getId(),sensorName).thenCompose(sensor ->
                         airQualityDataService.getSensorData(sensor).thenApply(sensorData ->
@@ -38,6 +50,9 @@ public class AirQualityService implements IAirQualityService {
                                     .map(sensorEntry -> new Pair<>(station, sensorEntry)).get())));
     }
 
+    /**
+     * {@inheritDoc}
+     */
     public CompletableFuture<Pair<Station, Double>> getAverageForStationAndSensor(String stationName, String sensorName,
                                                                                   LocalDateTime startDate, LocalDateTime endDate){
         return getStationByName(stationName).thenCompose(station ->
@@ -53,6 +68,9 @@ public class AirQualityService implements IAirQualityService {
                         })));
     }
 
+    /**
+     * {@inheritDoc}
+     */
     public CompletableFuture<Pair<Sensor, Double>> getMostUnstableParameter(String[] stationsNames, LocalDateTime startDate){
         return airQualityDataService.getStations()
                 .thenApplyAsync(stations -> stations.stream()
@@ -80,6 +98,9 @@ public class AirQualityService implements IAirQualityService {
                             .orElseThrow(() -> new NotFoundException("No data")));
     }
 
+    /**
+     * {@inheritDoc}
+     */
     public CompletableFuture<Pair<Sensor, Double>> getMinimalParameter(LocalDateTime date){
         return airQualityDataService.getStations()
                 .thenApplyAsync(stations ->
@@ -106,6 +127,9 @@ public class AirQualityService implements IAirQualityService {
                                 .map(val -> new Pair<>(val.getSecond(), val.getThird().getValue())).get());
     }
 
+    /**
+     * {@inheritDoc}
+     */
     public CompletableFuture<List<Triple<Station, Sensor, SensorData>>> getExceededParamsForStation(String stationName, LocalDateTime date){
         Map<String, Double> limit = new HashMap<>();
         limit.put("C6H6", 5.);
@@ -135,6 +159,9 @@ public class AirQualityService implements IAirQualityService {
                 );
     }
 
+    /**
+     * {@inheritDoc}
+     */
     public CompletableFuture<Pair<Triple<Station, Sensor, DoubleSummaryStatistics>,Triple<Station, Sensor, DoubleSummaryStatistics>>> minMaxForParameter(String sensorName){
         return airQualityDataService.getStations()
                 .thenApplyAsync(stations -> stations.stream()
@@ -165,6 +192,9 @@ public class AirQualityService implements IAirQualityService {
                 });
     }
 
+    /**
+     * {@inheritDoc}
+     */
     public CompletableFuture<List<Pair<Station, SensorData>>> getForStationsAndParam(String[] stationsNames, String sensorName,
                                                                                      LocalDateTime startDate, LocalDateTime endDate){
         return airQualityDataService.getStations()
@@ -185,6 +215,11 @@ public class AirQualityService implements IAirQualityService {
                             .collect(Collectors.toList()));
     }
 
+    /**
+     * Get stations and filter given one
+     * @param stationName name to filter by
+     * @return station filtered
+     */
     private CompletableFuture<Station> getStationByName(String stationName) {
         return airQualityDataService.getStations().thenApply(stations ->
                 stations.stream()
@@ -192,6 +227,11 @@ public class AirQualityService implements IAirQualityService {
                         .findFirst().orElseThrow(() -> new NotFoundException("Station "+stationName+" couldn't be found")));
     }
 
+    /**
+     * Get sensors and filter given one
+     * @param sensorName name to filter by
+     * @return sensors filtered
+     */
     private CompletableFuture<Sensor> getSensorByName(Long stationId, String sensorName){
         return airQualityDataService.getSensors(stationId).thenCompose(sensors ->
             CompletableFuture.completedFuture(sensors.stream()

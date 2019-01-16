@@ -12,7 +12,12 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
-public class AirQualityDataService {
+/**
+ * {@inheritDoc}
+ *
+ * This implementation cache data and if they are younger then one hour returns them
+ */
+public class AirQualityDataService implements IAirQualityDataService {
 
     private final IRestService restService;
     private final ICacheService cacheService;
@@ -25,6 +30,9 @@ public class AirQualityDataService {
     }
 
 
+    /**
+     * {@inheritDoc}
+     */
     public CompletableFuture<List<Station>> getStations(){
         final String key = "stations";
         if(!forceNetwork && !isExpired(key)){
@@ -35,6 +43,9 @@ public class AirQualityDataService {
         }
     }
 
+    /**
+     * {@inheritDoc}
+     */
     public CompletableFuture<List<Sensor>> getSensors(Long stationId){
         final String key = "sensors"+stationId;
         if(!forceNetwork && !isExpired(key)){
@@ -46,6 +57,9 @@ public class AirQualityDataService {
         }
     }
 
+    /**
+     * {@inheritDoc}
+     */
     public CompletableFuture<List<SensorData>> getSensorData(Sensor sensor){
         final String key = "sensorData"+sensor.getId();
         if(!forceNetwork && !isExpired(key)){
@@ -56,6 +70,9 @@ public class AirQualityDataService {
         }
     }
 
+    /**
+     * {@inheritDoc}
+     */
     public CompletableFuture<List<QualityIndex>> getIndexes(Long stationId){
         final String key = "indices"+stationId;
         if(!forceNetwork && !isExpired(key)){
