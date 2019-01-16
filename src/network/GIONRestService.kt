@@ -19,7 +19,7 @@ class GIONRestService: IRestService {
     override fun getStations(): CompletableFuture<List<Station>?> {
         return CompletableFuture.supplyAsync{
             val res = httpGet("$url/station/findAll", Array<StationGIONResponse>::class.java)
-                ?.map { it.map() }?.filter { it.name.contains("Kraków")|| it.name.contains("Warszawa")}?.toList() as List<Station>
+                ?.map { it.map() }?.toList() as List<Station>
             res
         }
     }
