@@ -1,5 +1,6 @@
 package service.airquality;
 
+import exception.NotFoundException;
 import kotlin.Pair;
 import kotlin.Triple;
 import model.QualityIndex;
@@ -61,7 +62,7 @@ public class AirQualityService implements IAirQualityService {
                             .reduce((sensors, sensors2) -> {
                                 sensors.addAll(sensors2);
                                 return sensors;
-                            }).get())
+                            }).orElseThrow(() -> new NotFoundException("No data")))
                 .thenApplyAsync(sensors ->
                         sensors.stream()
                             .map(sensor ->
@@ -76,7 +77,7 @@ public class AirQualityService implements IAirQualityService {
                                     return new Pair<>(sensorData.component1(), max - min);
                             })
                             .max((o1, o2) -> (int) (o1.component2() - o2.component2()))
-                            .get());
+                            .orElseThrow(() -> new NotFoundException("No data")));
     }
 
     public CompletableFuture<Pair<Sensor, Double>> getMinimalParameter(LocalDateTime date){
@@ -99,7 +100,7 @@ public class AirQualityService implements IAirQualityService {
                                         sensorData.component3().stream()
                                         .min((o1, o2) ->
                                                 (int) (secondsDiff(o1.getDate(), date) - secondsDiff(o2.getDate(), date)))
-                                        .get()))
+                                        .orElseThrow(() -> new NotFoundException("No data for "+sensorData.component2().getName()))))
 
                                 .min((o1, o2) -> (int) (o1.component3().getValue() - o2.component3().getValue()))
                                 .map(val -> new Pair<>(val.getSecond(), val.getThird().getValue())).get());
@@ -126,7 +127,7 @@ public class AirQualityService implements IAirQualityService {
                                             sensorData.component2().stream()
                                                 .min((o1, o2) ->
                                                         (int) (secondsDiff(o1.getDate(),date) - secondsDiff(o2.getDate(), date)))
-                                                .get()
+                                                .orElseThrow(() -> new NotFoundException("No data for "+stationName))
                                     ))
                             .filter(sensorData ->
                                     sensorData.component3().getValue() > limit.get(sensorData.component2().getName()))
@@ -156,10 +157,10 @@ public class AirQualityService implements IAirQualityService {
                 .thenApply(data -> {
                         Triple<Station, Sensor, DoubleSummaryStatistics> min = data.stream()
                                         .min((o1, o2) -> (int) (o1.getThird().getMin() - o2.getThird().getMin()))
-                                        .get();
+                                        .orElseThrow(() -> new NotFoundException("No data for "+sensorName));
                         Triple<Station, Sensor, DoubleSummaryStatistics> max = data.stream()
                                         .max((o1, o2) -> (int) (o1.getThird().getMax() - o2.getThird().getMax()))
-                                        .get();
+                                        .orElseThrow(() -> new NotFoundException("No data for "+sensorName));
                         return new Pair<>(min, max);
                 });
     }
@@ -188,7 +189,7 @@ public class AirQualityService implements IAirQualityService {
         return airQualityDataService.getStations().thenApply(stations ->
                 stations.stream()
                         .filter(s -> s.getName().contains(stationName))
-                        .findFirst().get());
+                        .findFirst().orElseThrow(() -> new NotFoundException("Station "+stationName+" couldn't be found")));
     }
 
     private CompletableFuture<Sensor> getSensorByName(Long stationId, String sensorName){
@@ -196,7 +197,7 @@ public class AirQualityService implements IAirQualityService {
             CompletableFuture.completedFuture(sensors.stream()
                     .filter(s -> s.getName().contains(sensorName))
                     .findFirst()
-                    .get()));
+                    .orElseThrow(() -> new NotFoundException("Sensor "+sensorName+" couldn't be found"))));
     }
 
     private Long secondsDiff(LocalDateTime date1, LocalDateTime date2){

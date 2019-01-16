@@ -208,7 +208,11 @@ class App{
 
     private void showCurrentIndex(IAirQualityService airQualityService, String station){
         airQualityService.getCurrentIndexForStation(station).thenAccept(qualityIndices ->
-                qualityIndices.forEach(i -> System.out.println(i.getDate() +" "+i.getName()+" "+i.getLevel()))).join();
+                qualityIndices.forEach(i -> System.out.println(i.getDate() +" "+i.getName()+" "+i.getLevel())))
+                .handle((aVoid, throwable) -> {
+                    handleThrowable(throwable);
+                    return aVoid;
+                }).join();
     }
 
     private void showSensorDataForStationAndParam(IAirQualityService airQualityService,
@@ -217,6 +221,9 @@ class App{
             System.out.println(data.getFirst().getName() + " "+ data.getFirst().getAddress());
             System.out.println(data.getSecond().getDate() + " " +
                     data.getSecond().getName() + " " + data.getSecond().getValue());
+        }).handle((aVoid, throwable) -> {
+            handleThrowable(throwable);
+            return aVoid;
         }).join();
     }
 
@@ -226,6 +233,9 @@ class App{
         airQualityService.getAverageForStationAndSensor(station, sensor, start, end).thenAccept(data -> {
             System.out.println(data.getFirst().getName() + " "+ data.getFirst().getAddress());
             System.out.println("Average is: "+data.getSecond());
+        }).handle((aVoid, throwable) -> {
+            handleThrowable(throwable);
+            return aVoid;
         }).join();
     }
 
@@ -235,6 +245,9 @@ class App{
         airQualityService.getMostUnstableParameter(stations, start).thenAccept(data -> {
             System.out.println(data.getFirst().getName() + " - sensor");
             System.out.println("Diff is: " +  data.getSecond());
+        }).handle((aVoid, throwable) -> {
+            handleThrowable(throwable);
+            return aVoid;
         }).join();
     }
 
@@ -242,6 +255,9 @@ class App{
         airQualityService.getMinimalParameter(date).thenAccept( data -> {
             System.out.println(data.getFirst().getName() + " - sensor");
             System.out.println("Mini is: "+data.getSecond());
+        }).handle((aVoid, throwable) -> {
+            handleThrowable(throwable);
+            return aVoid;
         }).join();
     }
 
@@ -255,6 +271,9 @@ class App{
                                 System.out.println(triple.component2().getName() + " - sensor");
                                 System.out.println("Value is: "+triple.component3().getValue());
                             });
+                }).handle((aVoid, throwable) -> {
+                    handleThrowable(throwable);
+                    return aVoid;
                 }).join();
     }
 
@@ -267,6 +286,9 @@ class App{
                     System.out.println("Maximal");
                     System.out.println(minmax.getSecond().getFirst().getName());
                     System.out.println(minmax.getSecond().getThird().getMax());
+                }).handle((aVoid, throwable) -> {
+                    handleThrowable(throwable);
+                    return aVoid;
                 }).join();
     }
 
@@ -285,11 +307,19 @@ class App{
                                 + " "+entry.getSecond().getValue());
                         printNStairs((int) Math.floor(entry.getSecond().getValue()/step));
                     });
+                }).handle((aVoid, throwable) -> {
+                    handleThrowable(throwable);
+                    return aVoid;
                 }).join();
     }
 
     private void printNStairs(int n){
         System.out.println(" "+"█".repeat(n));
+    }
+
+    private void handleThrowable(Throwable t){
+        if(t != null)
+            System.err.println("Couldn't receive data: "+ t.getMessage());
     }
 
 }
