@@ -1,41 +1,42 @@
-package service.data;
+package service.data
 
-import model.QualityIndex;
-import model.Sensor;
-import model.SensorData;
-import model.Station;
-
-import java.util.List;
-import java.util.concurrent.CompletableFuture;
+import kotlinx.coroutines.Deferred
+import model.QualityIndex
+import model.Sensor
+import model.SensorData
+import model.Station
 
 /**
  * Class that is responsible for managing data from different sources
  */
-public interface IAirQualityDataService {
+interface IAirQualityDataService {
 
     /**
      * Method that download stations from sources
      *
      * @return list of stations
      */
-    CompletableFuture<List<Station>> getStations();
+    fun getStations(): Deferred<List<Station>>
+
     /**
      * Method that download sensor for station from sources
      *
      * @return list of sensor
      */
-    CompletableFuture<List<Sensor>> getSensors(Long stationId);
+    fun getSensors(stationId: Long): Deferred<List<Sensor>>
+
     /**
      * Method that download sensor data for sensor from sources
      *
      * @return list of sensordata
      */
-    CompletableFuture<List<SensorData>> getSensorData(Sensor sensor);
+    fun getSensorData(sensor: Sensor): Deferred<List<SensorData>>
+
     /**
      * Method that download indices for given station from sources
      *
      * @return list of indices
      */
-    CompletableFuture<List<QualityIndex>> getIndexes(Long stationId);
+    fun getIndexes(stationId: Long): Deferred<List<QualityIndex>>
 
 }

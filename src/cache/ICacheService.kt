@@ -1,19 +1,19 @@
-package cache;
+package cache
 
-import java.time.LocalDateTime;
-import java.util.Optional;
+import java.time.LocalDateTime
+import java.util.*
 
 /**
  * Class that allow to save different types of data offline in files
  */
-public interface ICacheService {
+interface ICacheService {
     /**
      * Save given data under the key
      *
      * @param key key value
      * @param data data to save
      */
-    void save(String key, Object data);
+    fun save(key: String, data: Any)
 
     /**
      * Read data which was previously saved with given key
@@ -21,12 +21,12 @@ public interface ICacheService {
      * @param key key that data was saved with
      * @return readed data
      */
-    Optional<Object> read(String key);
+    fun read(key: String): Optional<Any>
 
     /**
      * Check when data with given key was modified last time
      * @param key key of data
      * @return date of last file modification
      */
-    LocalDateTime getLasyModificationOfFile(String key);
+    fun getLasyModificationOfFile(key: String): LocalDateTime
 }
