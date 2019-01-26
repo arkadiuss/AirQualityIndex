@@ -1,6 +1,7 @@
 package service.data
 
 import cache.ICacheService
+import common.map
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.async
@@ -9,7 +10,6 @@ import model.Sensor
 import model.SensorData
 import model.Station
 import network.IRestService
-import network.map
 import java.time.LocalDateTime
 
 /**
