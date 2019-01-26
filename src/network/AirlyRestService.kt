@@ -1,8 +1,7 @@
 package network
 
+import common.map
 import kotlinx.coroutines.Deferred
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.async
 import model.QualityIndex
 import model.Sensor
 import model.SensorData
@@ -29,75 +28,73 @@ class AirlyRestService : IRestService {
      * {@inheritDoc}
      */
     override fun getStations(): Deferred<List<Station>> {
-        return GlobalScope.async {
-            val stations = httpGet(
+        return httpGetAsync(
                 url + "installations/nearest?lat=50.0647&lng=19.9450&&maxDistanceKM=20&maxResults=100",
                 Array<StationAirlyResponse>::class.java, headers
-            )
-            stations?.map { it.map() }?: emptyList()
-        }
+            ).map { stations ->
+                stations?.map { it.map() } ?: emptyList()
+            }
     }
 
     /**
      * {@inheritDoc}
      */
     override fun getSensors(stationID: Long): Deferred<List<Sensor>> {
-        return GlobalScope.async {
-            val response = httpGet(
+        return httpGetAsync(
                 url + "measurements/installation?installationId=" + stationID,
                 MeasurementsAirlyResponse::class.java, headers
-            )
-            val values = response?.current?.values
-            IntStream.range(0, values!!.size)
-                .mapToObj { i -> Sensor(i.toLong(), stationID?:-1, values[i].name ?:"") }
-                .toList()
-        }
+            ).map {
+                val values = it?.current?.values
+                IntStream.range(0, values!!.size)
+                    .mapToObj { i -> Sensor(i.toLong(), stationID?:-1, values[i].name ?:"") }
+                    .toList()
+            }
     }
 
     /**
      * {@inheritDoc}
      */
     override fun getSensorData(sensor: Sensor): Deferred<List<SensorData>> {
-        return GlobalScope.async {
-            val response = httpGet(
+        return httpGetAsync(
                 url + "measurements/installation?installationId=" + sensor.stationId,
                 MeasurementsAirlyResponse::class.java, headers
-            )
-            val curValues = response?.current?.values
-            val histValues = response?.history
-            Stream.concat(
-                curValues?.stream(),
-                histValues?.stream()?.flatMap { it.values?.stream() }
-            )
-                .filter { sensorDataAirly -> sensorDataAirly.name == sensor.name }
-                .map { sensorDataAirly ->
-                    SensorData(
-                        sensorDataAirly.name?:"",
-                        response?.current?.tillDateTime?: LocalDateTime.MIN,
-                        sensorDataAirly.value?:0.0
-                    )
-                }
-                .toList()
-        }
+            ).map { response ->
+                val curValues = response?.current?.values
+                val histValues = response?.history
+                Stream.concat(
+                    curValues?.stream(),
+                    histValues?.stream()?.flatMap { it.values?.stream() }
+                )
+                    .filter { sensorDataAirly -> sensorDataAirly.name == sensor.name }
+                    .map { sensorDataAirly ->
+                        SensorData(
+                            sensorDataAirly.name?:"",
+                            response?.current?.tillDateTime?: LocalDateTime.MIN,
+                            sensorDataAirly.value?:0.0
+                        )
+                    }
+                    .toList()
+            }
     }
+
 
     /**
      * {@inheritDoc}
      */
     override fun getIndexes(stationID: Long): Deferred<List<QualityIndex>> {
-        return GlobalScope.async{
-            val response = httpGet(
+        return httpGetAsync(
                 url + "measurements/installation?installationId=" + stationID,
                 MeasurementsAirlyResponse::class.java, headers
-            )
-            val date = response?.current?.fromDateTime?: LocalDateTime.MIN
-            response?.current?.indexes?.map { indexAirly ->
+            ).map { response ->
+                val date = response?.current?.fromDateTime ?: LocalDateTime.MIN
+                response?.current?.indexes?.map { indexAirly ->
                     val builder = QualityIndex.Builder()
                     builder.date = date
                     builder.level = indexAirly.level
                     builder.name = indexAirly.name
                     builder.build()
-                }?: emptyList()
-        }
+                } ?: emptyList()
+            }
     }
+
 }

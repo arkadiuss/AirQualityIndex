@@ -9,6 +9,7 @@ import model.Sensor
 import model.SensorData
 import model.Station
 import network.IRestService
+import network.map
 import java.time.LocalDateTime
 
 /**
@@ -29,9 +30,7 @@ open class AirQualityDataService(
     override fun getStations(): Deferred<List<Station>> {
         val key = "stations"
         return checkCacheAndGet(key) {
-            GlobalScope.async {
-                restService.stations.await().map { stations -> saveOrGetFromCache(key, stations) }
-            }
+            restService.getStations().map { stations -> saveOrGetFromCache(key, stations) }
         }
     }
 
@@ -41,10 +40,7 @@ open class AirQualityDataService(
     override fun getSensors(stationId: Long): Deferred<List<Sensor>> {
         val key = "sensors$stationId"
         return checkCacheAndGet(key) {
-            GlobalScope.async {
-                restService.getSensors(stationId)
-                    .await().map { sensors -> saveOrGetFromCache(key, sensors) }
-            }
+            restService.getSensors(stationId).map { sensors -> saveOrGetFromCache(key, sensors) }
         }
     }
 
@@ -54,10 +50,7 @@ open class AirQualityDataService(
     override fun getSensorData(sensor: Sensor): Deferred<List<SensorData>> {
         val key = "sensorData${sensor.id}"
         return checkCacheAndGet(key){
-            GlobalScope.async {
-                restService.getSensorData(sensor).await()
-                    .map { sensorData -> saveOrGetFromCache(key, sensorData) }
-            }
+            restService.getSensorData(sensor).map { sensorData -> saveOrGetFromCache(key, sensorData) }
         }
     }
 
@@ -67,10 +60,7 @@ open class AirQualityDataService(
     override fun getIndexes(stationId: Long): Deferred<List<QualityIndex>> {
         val key = "indices$stationId"
         return checkCacheAndGet(key){
-            GlobalScope.async {
-                restService.getIndexes(stationId).await()
-                    .map{ qualityIndices -> saveOrGetFromCache(key, qualityIndices) }
-            }
+            restService.getIndexes(stationId).map{ qualityIndices -> saveOrGetFromCache(key, qualityIndices) }
         }
     }
 

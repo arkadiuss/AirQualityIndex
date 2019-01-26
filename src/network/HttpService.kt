@@ -43,8 +43,3 @@ fun <T> httpGetAsync(url: String, responseClass: Class<T>, headers: Map<String,S
         httpGet(url, responseClass, headers)
     }
 }
-
-suspend fun <T,V> Deferred<T>.map(f: (T) -> V): V {
-    await()
-    return f(getCompleted())
-}
