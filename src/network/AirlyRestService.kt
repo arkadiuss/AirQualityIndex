@@ -45,8 +45,8 @@ class AirlyRestService : IRestService {
                 MeasurementsAirlyResponse::class.java, headers
             ).map {
                 val values = it?.current?.values
-                IntStream.range(0, values!!.size)
-                    .mapToObj { i -> Sensor(i.toLong(), stationID?:-1, values[i].name ?:"") }
+                IntStream.range(0, values?.size?:0)
+                    .mapToObj { i -> Sensor(i.toLong(), stationID, values?.get(i)?.name ?:"") }
                     .toList()
             }
     }

@@ -1,28 +1,23 @@
-package service.airquality;
+package service.airquality
 
-import kotlin.Pair;
-import kotlin.Triple;
-import model.QualityIndex;
-import model.Sensor;
-import model.SensorData;
-import model.Station;
-
-import java.time.LocalDateTime;
-import java.util.DoubleSummaryStatistics;
-import java.util.List;
-import java.util.concurrent.CompletableFuture;
+import model.QualityIndex
+import model.Sensor
+import model.SensorData
+import model.Station
+import java.time.LocalDateTime
+import java.util.*
 
 /**
  * Class that have a methods to process  and analyze data from service
  */
-public interface IAirQualityService {
+interface IAirQualityService {
     /**
      * Method that obtains current indices for given station
      *
      * @param stationName substring of station name
      * @return index for a station
      */
-    CompletableFuture<List<QualityIndex>> getCurrentIndexForStation(String stationName);
+    suspend fun getCurrentIndexForStation(stationName: String): List<QualityIndex>
 
     /**
      * Method that obtains value of parameter for given arguments
@@ -32,7 +27,11 @@ public interface IAirQualityService {
      * @param date the nearest date
      * @return data from sensor for given arguments
      */
-    CompletableFuture<Pair<Station, SensorData>> getSensorDataForStationAndDate(String stationName, String sensorName, LocalDateTime date);
+    suspend fun getSensorDataForStationAndDate(
+        stationName: String,
+        sensorName: String,
+        date: LocalDateTime
+    ): Triple<Station, Sensor, SensorData?>
 
     /**
      * Method that counts an average for sensor for given period
@@ -43,7 +42,12 @@ public interface IAirQualityService {
      * @param endDate end of the period
      * @return Average from given
      */
-    CompletableFuture<Pair<Station, Double>> getAverageForStationAndSensor(String stationName, String sensorName, LocalDateTime startDate, LocalDateTime endDate);
+    suspend fun getAverageForStationAndSensor(
+        stationName: String,
+        sensorName: String,
+        startDate: LocalDateTime,
+        endDate: LocalDateTime
+    ): Pair<Station, Double>
 
     /**
      * Method that counts most unstable parameter
@@ -52,7 +56,10 @@ public interface IAirQualityService {
      * @param startDate date that we start counting
      * @return Most unstable parameter
      */
-    CompletableFuture<Pair<Sensor, Double>> getMostUnstableParameter(String[] stationsNames, LocalDateTime startDate);
+    suspend fun getMostUnstableParameter(
+        stationsNames: Array<String>,
+        startDate: LocalDateTime
+    ): Pair<Sensor, Double>
 
     /**
      * Method that counts parameter with minimum value for given date
@@ -60,7 +67,7 @@ public interface IAirQualityService {
      * @param date date to obtain data
      * @return sensor for Minimal parameter
      */
-    CompletableFuture<Pair<Sensor, Double>> getMinimalParameter(LocalDateTime date);
+    suspend fun getMinimalParameter(date: LocalDateTime): Pair<Sensor, Double>
 
     /**
      * Method that obtains parameter that exceed the norm
@@ -69,7 +76,10 @@ public interface IAirQualityService {
      * @param date date for data
      * @return list of parameters that exceeded the norm
      */
-    CompletableFuture<List<Triple<Station, Sensor, SensorData>>> getExceededParamsForStation(String stationName, LocalDateTime date);
+    suspend fun getExceededParamsForStation(
+        stationName: String,
+        date: LocalDateTime
+    ): List<Triple<Station, Sensor, SensorData?>>
 
     /**
      * Method that obtain minimum and maximum value for given sensor
@@ -77,8 +87,7 @@ public interface IAirQualityService {
      * @param sensorName name of the sensor
      * @return Minimum and maximum value for given sensor
      */
-    CompletableFuture<Pair<Triple<Station, Sensor, DoubleSummaryStatistics>,Triple<Station, Sensor, DoubleSummaryStatistics>>>
-            minMaxForParameter(String sensorName);
+    suspend fun minMaxForParameter(sensorName: String): Pair<Triple<Station, Sensor, DoubleSummaryStatistics>, Triple<Station, Sensor, DoubleSummaryStatistics>>
 
     /**
      * Method that obtain data for station from given period
@@ -89,6 +98,8 @@ public interface IAirQualityService {
      * @param endDate end of the period
      * @return station with sensor data for it
      */
-    CompletableFuture<List<Pair<Station, SensorData>>> getForStationsAndParam(String[] stationsNames, String sensorName,
-                                                                                     LocalDateTime startDate, LocalDateTime endDate);
+    suspend fun getForStationsAndParam(
+        stationsNames: Array<String>, sensorName: String,
+        startDate: LocalDateTime, endDate: LocalDateTime
+    ): List<Pair<Station, SensorData>>
 }
