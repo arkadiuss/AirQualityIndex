@@ -12,7 +12,6 @@ import org.junit.runner.RunWith
 import org.mockito.Mockito
 import java.time.LocalDateTime
 
-@RunWith(KotlinTestRunner::class)
 class AirQualityDataServiceTest {
 
     private val cacheService = Mockito.spy(CacheService::class.java)
