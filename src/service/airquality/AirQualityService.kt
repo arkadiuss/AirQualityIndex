@@ -22,7 +22,7 @@ class AirQualityService(private val airQualityDataService: AirQualityDataService
      * {@inheritDoc}
      */
     override suspend fun getCurrentIndexForStation(stationName: String): List<QualityIndex> {
-        val station =  getStationByName(stationName)
+        val station =  safeGetStationByName(stationName)
         return airQualityDataService.getIndexes(station.id).await()
     }
 
@@ -33,8 +33,8 @@ class AirQualityService(private val airQualityDataService: AirQualityDataService
         stationName: String, sensorName: String,
         date: LocalDateTime
     ): Triple<Station, Sensor, SensorData?> {
-        val station =  getStationByName(stationName)
-        val sensor = getSensorByName(station.id, sensorName)
+        val station =  safeGetStationByName(stationName)
+        val sensor = safeGetSensorByName(station.id, sensorName)
         return Triple(station, sensor, airQualityDataService.getSensorData(sensor).awaitAndMap { sensorData ->
             sensorData.minBy { secondsDiff(it.date, date) }
         })
@@ -47,8 +47,8 @@ class AirQualityService(private val airQualityDataService: AirQualityDataService
         stationName: String, sensorName: String,
         startDate: LocalDateTime, endDate: LocalDateTime
     ): Pair<Station, Double> {
-        val station =  getStationByName(stationName)
-        val sensor = getSensorByName(station.id, sensorName)
+        val station =  safeGetStationByName(stationName)
+        val sensor = safeGetSensorByName(station.id, sensorName)
         return Pair(station, airQualityDataService.getSensorData(sensor).awaitAndMap { sensorData ->
                 sensorData.stream()
                         .filter { sensorEntry -> sensorEntry.date.isBetween(startDate, endDate) }
@@ -113,7 +113,7 @@ class AirQualityService(private val airQualityDataService: AirQualityDataService
         limit["PM10"] = 50.0
         limit["PM2.5"] = 25.0
         limit["Pb"] = 0.5
-        val station = getStationByName(stationName)
+        val station = safeGetStationByName(stationName)
         val sensors = airQualityDataService.getSensors(station.id).await()
         return sensors
             .map { Triple(station, it, airQualityDataService.getSensorData(it).await()) }
@@ -125,11 +125,13 @@ class AirQualityService(private val airQualityDataService: AirQualityDataService
     /**
      * {@inheritDoc}
      */
+    //TODO: fix !!
     override suspend fun minMaxForParameter(sensorName: String): Pair<Triple<Station, Sensor, DoubleSummaryStatistics>,
             Triple<Station, Sensor, DoubleSummaryStatistics>> {
         val stations = airQualityDataService.getStations().await()
         val stationWithSensors = stations.map { station -> Pair(station, getSensorByName(station.id, sensorName)) }
         val data = stationWithSensors
+            .mapNotNull { if (it.second == null) null else Pair(it.first, it.second!!) }
             .map { Triple(it.first, it.second, airQualityDataService.getSensorData(it.second).await()) }
             .mapThird { t -> t.stream().mapToDouble{ it.value }.summaryStatistics() }
 
@@ -157,6 +159,7 @@ class AirQualityService(private val airQualityDataService: AirQualityDataService
             .map { station -> Pair(station, getSensorByName(station.id, sensorName)) }
 
         return stationWithSensor
+            .mapNotNull { if (it.second == null) null else Pair(it.first, it.second!!)  }
             .map { Pair(it.first, airQualityDataService.getSensorData(it.second).await()) }
             .flatMap { p -> p.second.map { sensorData -> Pair(p.first, sensorData) } }
             .filter { p -> p.second.date.isBetween(startDate, endDate) }
@@ -167,12 +170,15 @@ class AirQualityService(private val airQualityDataService: AirQualityDataService
      * @param stationName name to filter by
      * @return station filtered
      */
-    private suspend fun getStationByName(stationName: String): Station {
+    private suspend fun getStationByName(stationName: String): Station? {
         return airQualityDataService.getStations().map { stations ->
             stations
                 .firstOrNull { s -> s.name.contains(stationName) }
-                ?:throw NotFoundException("Station $stationName couldn't be found")
         }.await()
+    }
+
+    private suspend fun safeGetStationByName(stationName: String): Station {
+        return getStationByName(stationName) ?:throw NotFoundException("Station $stationName couldn't be found")
     }
 
     /**
@@ -180,11 +186,15 @@ class AirQualityService(private val airQualityDataService: AirQualityDataService
      * @param sensorName name to filter by
      * @return sensors filtered
      */
-    private suspend fun getSensorByName(stationId: Long, sensorName: String): Sensor {
+    private suspend fun getSensorByName(stationId: Long, sensorName: String): Sensor? {
         return airQualityDataService.getSensors(stationId).map { sensors ->
             sensors.firstOrNull { s -> s.name.contains(sensorName) }
-                ?: throw NotFoundException("Sensor $sensorName couldn't be found")
         }.await()
+    }
+
+    private suspend fun safeGetSensorByName(stationId: Long, sensorName: String): Sensor{
+        return getSensorByName(stationId, sensorName)
+            ?: throw NotFoundException("Sensor $sensorName couldn't be found")
     }
 
     private fun secondsDiff(date1: LocalDateTime, date2: LocalDateTime): Long {

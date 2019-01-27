@@ -15,21 +15,24 @@ class ConsoleApp: App {
     private val parser = DefaultParser()
     private lateinit var cmd: CommandLine
 
-    private val API: String = "api"
-    private val STATION = "station"
-    private val SENSOR = "sensor"
-    private val STATIONS = "stations"
-    private val START_DATE = "start-date"
-    private val DATE = "date"
-    private val END_DATE = "end-date"
-    private val CURRECT_INDEX = "current-index"
-    private val SENSOR_STATUS = "sensor-status"
-    private val SENSOR_AVERAGE = "sensor-average"
-    private val GREATEST_DIFF = "greatest-diff"
-    private val MINIMAL_PARAM = "minimal-param"
-    private val EXCEEDING = "exceeding"
-    private val MINMAX = "minmax"
-    private val GRAPH = "graph"
+    companion object {
+        const val API = "api"
+        const val STATION = "station"
+        const val SENSOR = "sensor"
+        const val STATIONS = "stations"
+        const val START_DATE = "start-date"
+        const val DATE = "date"
+        const val END_DATE = "end-date"
+        const val CURRECT_INDEX = "current-index"
+        const val SENSOR_STATUS = "sensor-status"
+        const val SENSOR_AVERAGE = "sensor-average"
+        const val GREATEST_DIFF = "greatest-diff"
+        const val MINIMAL_PARAM = "minimal-param"
+        const val EXCEEDING = "exceeding"
+        const val MINMAX = "minmax"
+        const val GRAPH = "graph"
+    }
+
 
     override fun run(args: Array<String>) {
         try {
@@ -117,7 +120,6 @@ class ConsoleApp: App {
             .desc("Select an api to use")
             .numberOfArgs(1)
             .build()
-
         val currentIndex = Option.builder()
             .longOpt(CURRECT_INDEX)
             .desc("Show current index for a station")
